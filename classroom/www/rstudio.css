@@ -29,11 +29,13 @@ h3 {
   font-size: 36px;
 }
 
+/* SN: commenting so url sizes similarly to text
 a, a > code {
   font-family: 'PT Mono';
   color: rgb(249, 38, 114);
   text-decoration: none;
 }
+*/
 .footnote {
   position: absolute;
   bottom: 3em;

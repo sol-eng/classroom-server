@@ -16,7 +16,7 @@ ui <- fluidPage(theme = "rstudio.css",
   sidebarLayout(
     sidebarPanel(
       textInput("number", "Assigned server number", width = "300px"),
-      textOutput("url"),
+      htmlOutput("url"),
       textOutput("user"),
       textOutput("password"),
       width = 4
@@ -48,13 +48,20 @@ server <- function(input, output) {
     password <- ifelse(nrow(getpass) == 0, "Password", as.character(getpass))
   })
 
-  output$url <- renderText({
+  output$url <- renderUI({
     geturl <- instances %>%
       rownames_to_column() %>%
       filter(rowname == input$number) %>%
       select(url)
 
-    url <- ifelse(nrow(geturl) == 0, "URL", as.character(geturl))
+    # SN: using `<- ifelse` assignment returned "a" instead of an a tag.
+    # this is probably because I don't know what I'm doing.
+    if(nrow(geturl) == 0) {
+      url <- "URL"
+    } else {
+      url <- a(geturl,href=as.character(geturl), target="_blank")
+    }
+   
   })
 }
 
