@@ -15,7 +15,7 @@ ui <- fluidPage(theme = "rstudio.css",
 
   sidebarLayout(
     sidebarPanel(
-      textInput("number", "Assigned server number", width = "400px"),
+      textInput("number", "Assigned server number", width = "300px"),
       htmlOutput("url"),
       textOutput("user"),
       textOutput("password"),
