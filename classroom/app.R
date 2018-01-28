@@ -59,7 +59,7 @@ server <- function(input, output) {
     if(nrow(geturl) == 0) {
       url <- "URL"
     } else {
-      url <- a(geturl,href=as.character(geturl))
+      url <- a(geturl,href=as.character(geturl), target="_blank")
     }
    
   })
