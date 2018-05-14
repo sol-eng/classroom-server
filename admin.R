@@ -2,6 +2,7 @@ library(shiny)
 library(shinyjs)
 library(tidyverse)
 library(DBI)
+library(odbc)
 
 type_of_info <- config::get("info", file = "classroom/config.yml")
 

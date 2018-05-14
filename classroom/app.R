@@ -1,6 +1,7 @@
 library(shiny)
 library(tidyverse)
 library(DBI)
+library(odbc)
 
 type_of_info <- config::get("info")
 
