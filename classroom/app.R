@@ -77,7 +77,7 @@ if (type_of_info == "database") {
     if (nrow(output) == 0) {
       shiny::showNotification(
         paste("ERROR: no server available for ID =", select_id)
-        , duration = 100
+        , duration = 10
         , type = "error"
       )
     }
