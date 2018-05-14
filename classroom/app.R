@@ -1,6 +1,6 @@
 library(shiny)
 library(tidyverse)
-
+library(DBI)
 
 type_of_info <- config::get("info")
 
