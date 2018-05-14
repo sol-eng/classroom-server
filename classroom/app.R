@@ -107,40 +107,35 @@ ui <- fluidPage(theme = "rstudio.css",
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+  
 
-  output$user <- renderText({
-    getuser <- instances %>%
-      rownames_to_column() %>%
-      filter(rowname == input$number) %>%
-      select(user_name)
-
-    username <- ifelse(nrow(getuser) == 0, "User Name", as.character(getuser))
-  })
-
-  output$password <- renderText({
-    getpass <- instances %>%
-      rownames_to_column() %>%
-      filter(rowname == input$number) %>%
-      select(password)
-
-    password <- ifelse(nrow(getpass) == 0, "Password", as.character(getpass))
-  })
-
-  output$url <- renderUI({
-    geturl <- instances %>%
-      rownames_to_column() %>%
-      filter(rowname == input$number) %>%
-      select(url)
-
-    # SN: using `<- ifelse` assignment returned "a" instead of an a tag.
-    # this is probably because I don't know what I'm doing.
-    if(nrow(geturl) == 0) {
-      url <- "URL"
-    } else {
-      url <- a(geturl,href=as.character(geturl), target="_blank")
-    }
-   
-  })
+  observeEvent(input$submit
+               , {
+                 curr_instance <- get_instance(
+                   instances
+                   , as.numeric(input$number)
+                   )
+                 output$url <- renderUI({
+                   geturl <- curr_instance[["url"]]
+                   validate(need(geturl, "ERROR: There is no such server", "url"))
+                   url <- a(paste("URL:",geturl)
+                              ,href=as.character(geturl)
+                              , target="_blank")
+                   return(url)
+                 })
+                 output$user <- renderText({
+                   username <- curr_instance[["user_name"]]
+                   validate(need(username, message = FALSE, "username"))
+                   return(paste("User:",username))
+                 })
+                 output$password <- renderText({
+                   password <- curr_instance[["password"]]
+                   validate(need(password, message = FALSE, "password"))
+                   return(paste("Password:",password))
+                 })
+                 
+               })
+ 
 }
 
 # Run the application
