@@ -62,7 +62,7 @@ if (type_of_info == "database") {
       shiny::showNotification(
         paste("WARNING: Server has been claimed"
                 , pre_claim_count
-                , "times... have you typed something incorrectly?")
+                , "times... be certain this is your server!")
         , duration = 10
         , closeButton = TRUE
         , type = "warning"
