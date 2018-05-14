@@ -87,7 +87,7 @@ if (type_of_info == "database") {
 
 ui <- fluidPage(theme = "rstudio.css",
 
-  titlePanel("Big Data with R"),
+  titlePanel("Casualty Actuarial Society 2018"),
   
 
   sidebarLayout(
