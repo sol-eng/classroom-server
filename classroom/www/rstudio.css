@@ -128,3 +128,14 @@ thead, tfoot, tr:nth-child(even) { background: #eee }
   padding-left: 180px;
   padding-right: 40px;
 }
+
+
+.shiny-output-error-validation {
+  color: red;
+  font-size: 12pt;
+}
+
+#shiny-notification-panel {
+  top: 0;
+  bottom: auto;
+}
