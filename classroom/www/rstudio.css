@@ -4,7 +4,7 @@
 
 body { 
   font-family: 'Source Sans Pro';
-  background-image: url('images/title.jpg');
+  background-image: url('images/rstudio.png');
 }
 
 p {
@@ -55,7 +55,7 @@ a, a > code {
   background-size: contain;
 }
 .title-slide {
-  background-image: url('images/title.jpg');
+  background-image: url('images/rstudio.png');
   background-size: contain;
 }
 .title-slide h1, .title-slide h2, .title-slide h3 {
