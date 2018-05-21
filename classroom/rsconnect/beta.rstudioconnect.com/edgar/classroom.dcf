@@ -1,0 +1,12 @@
+name: classroom
+title: classroom
+username: edgar
+account: edgar
+server: beta.rstudioconnect.com
+hostUrl: https://beta.rstudioconnect.com/__api__
+appId: 3252
+bundleId: 7030
+url: https://beta.rstudioconnect.com/content/3252/
+when: 1517017340.30687
+asMultiple: FALSE
+asStatic: FALSE
