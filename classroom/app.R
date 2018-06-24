@@ -88,7 +88,7 @@ if (type_of_info == "database") {
 
 ui <- fluidPage(theme = "rstudio.css",
 
-  titlePanel("CAS 2018"),
+  titlePanel(h3("Reproducible Computing 2018")),
   
 
   sidebarLayout(
