@@ -1,0 +1,13 @@
+name: classroom
+title: classroom
+username: cole
+account: cole
+server: colorado.rstudio.com
+hostUrl: http://colorado.rstudio.com:3939/__api__
+appId: 1103
+bundleId: 10180
+url: http://colorado.rstudio.com:3939/classroom-assignment/
+when: 1529781780.94298
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: all_data.rds|classroom_instances.csv|explore-classroom-data.R
