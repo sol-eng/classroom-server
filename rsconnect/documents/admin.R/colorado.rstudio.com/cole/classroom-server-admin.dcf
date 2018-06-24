@@ -1,0 +1,12 @@
+name: classroom-server-admin
+title: classroom-server-admin
+username: cole
+account: cole
+server: colorado.rstudio.com
+hostUrl: http://colorado.rstudio.com:3939/__api__
+appId: 1102
+bundleId: 6954
+url: http://colorado.rstudio.com:3939/content/1102/
+when: 1526302657.45126
+asMultiple: FALSE
+asStatic: FALSE
