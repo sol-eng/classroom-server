@@ -1,19 +1,32 @@
 library(shiny)
 library(magrittr)
-#library(shinycssloaders)
+library(shinycssloaders)
 
 ui <- fluidPage(
     
     # Application title
     titlePanel("Old Faithful Geyser Data"),
+    uiOutput("admin_option"),
     uiOutput("page_0") %>% withSpinner(),
     uiOutput("page_1"),
-    uiOutput("page_2")
+    uiOutput("page_2"),
+    
+    uiOutput("page_10")
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
     
     state <- reactiveVal(0, label = "state")
+    
+    output$admin_option <- renderUI({
+        if (session$user %in% c("cole")) {
+            actionButton("to_admin_page", "To Admin Page")
+        }
+    })
+    observeEvent(input$to_admin_page, {
+        state(10);
+    })
+    
     
     # state = 0 : prompt for password
     output$page_0 <- renderUI({
@@ -66,8 +79,8 @@ server <- function(input, output) {
     })
     
     observeEvent(input$no_modal_1, {
-        removeModal()
         state(0)
+        removeModal()
     })
     
     output$page_2 <- renderUI({
@@ -78,6 +91,19 @@ server <- function(input, output) {
         )
     })
     
+    
+    output$page_10 <- renderUI({
+        req(state() == 10);
+        
+        div(
+            h3("Admin page!"),
+            actionButton("admin_back_to_app", "Back to App")
+        )
+    })
+    
+    observeEvent(input$admin_back_to_app, {
+        state(0);
+    })
 }
 
 # Run the application 
