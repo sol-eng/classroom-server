@@ -1,9 +1,11 @@
 create_table_classroom <- function(schema, prefix){
-  glue::glue("CREATE TABLE {schema}.{prefix}classroom (
-             classroomid serial PRIMARY KEY NOT NULL,
-             name text NOT NULL UNIQUE,
-             password text NOT NULL
-             );")
+  glue::glue(
+    "CREATE TABLE {schema}.{prefix}classroom ( 
+    classroomid serial PRIMARY KEY NOT NULL,
+    name text NOT NULL UNIQUE,
+    password text NOT NULL,
+    status text NOT NULL DEFAULT 'CREATED'         
+    );")
 }
 
 create_table_student <- function(schema, prefix){
@@ -28,6 +30,19 @@ create_table_instance <- function(schema, prefix){
     url text NOT NULL,
     user text NOT NULL,
     password text NOT NULL
+    );"
+  )
+}
+
+create_table_claim <- function(schema, prefix){
+  glue::glue(
+    "CREATE TABLE {schema}.{prefix}claim (
+      claimid serial PRIMARY KEY NOT NULL,
+      classroomid integer NOT NULL FOREIGN KEY REFERENCES {schema}.{prefix}classroom (classroomid),
+      instanceid integer NOT NULL FOREIGN KEY REFERENCES {schema}.{prefix}instance (instanceid),
+      studentid integer NOT NULL FOREIGN KEY REFERENCES {schema}.{prefix}student (studentid),
+      cookie text,
+      info text
     );"
   )
 }
