@@ -1,10 +1,17 @@
+create_schema <- function(schema){
+  glue::glue(
+    "CREATE SCHEMA IF NOT EXISTS AUTHORIZATION {schema};"
+  )
+}
+
 create_table_classroom <- function(schema, prefix){
   glue::glue(
     "CREATE TABLE {schema}.{prefix}classroom ( 
     classroomid serial PRIMARY KEY NOT NULL,
     name text NOT NULL UNIQUE,
     password text NOT NULL,
-    status text NOT NULL DEFAULT 'CREATED'         
+    status text NOT NULL DEFAULT 'CREATED',
+    claim_per_student integer NOT NULL DEFAULT 1
     );")
 }
 
@@ -44,5 +51,66 @@ create_table_claim <- function(schema, prefix){
       cookie text,
       info text
     );"
+  )
+}
+
+add_created_lm_user <- function(schema, prefix, table){
+  glue::glue(
+    "ALTER TABLE {schema}.{prefix}{table}
+    ADD COLUMN IF NOT EXISTS created timestamp NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS createdby text NOT NULL DEFAULT current_user,
+    ADD COLUMN IF NOT EXISTS lastmodified timestamp NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS lastmodifiedby text NOT NULL DEFAULT current_user
+    ;
+    "
+  )
+}
+
+create_ts_trigger <- function(schema, prefix){
+  glue::glue(
+    "CREATE FUNCTION {schema}.{prefix}_update_created_lm_user()
+      RETURNS trigger
+    AS $body$
+    BEGIN
+    
+    END;
+    $body$
+    LANGUAGE PLPGSQL
+    ;"
+  )
+}
+
+add_ts_trigger <- function(schema, prefix, table){
+  glue::glue(
+    "CREATE TRIGGER tr_{prefix}{table}_update_created_lm_user
+      BEFORE INSERT OR UPDATE ON {schema}.{prefix}{table}
+    FOR EACH ROW
+    EXECUTE PROCEDURE {schema}.{prefix}_update_created_lm_user()
+    ;"
+  )
+}
+
+create_archive_trigger <- function(schema, prefix){
+  glue::glue(
+    "CREATE FUNCTION {schema}.{prefix}_archive_trigger()
+      RETURNS trigger
+    AS $body$
+    BEGIN
+    
+    
+    END;
+    $body$
+    LANGUAGE PLPGSQL
+    ;"
+  )
+}
+
+add_archive_trigger <- function(schema, prefix, table){
+  glue::glue(
+    "CREATE TRIGGER tr_{prefix}archive{table}
+      AFTER INSERT OR UPDATE OR DELETE ON {schema}.{prefix}{table}
+      FOR EACH ROW
+      EXECUTE PROCEDURE {schema}.{prefix}_archive_trigger()
+    ;"
   )
 }
