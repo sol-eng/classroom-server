@@ -54,7 +54,7 @@ create_table_claim <- function(schema, prefix){
   )
 }
 
-add_created_lm_user <- function(schema, prefix, table){
+add_created_lm_by <- function(schema, prefix, table){
   glue::glue(
     "ALTER TABLE {schema}.{prefix}{table}
     ADD COLUMN IF NOT EXISTS created timestamp NOT NULL DEFAULT now(),
@@ -68,10 +68,22 @@ add_created_lm_user <- function(schema, prefix, table){
 
 create_ts_trigger <- function(schema, prefix){
   glue::glue(
-    "CREATE FUNCTION {schema}.{prefix}_update_created_lm_user()
+    "CREATE FUNCTION {schema}.{prefix}_update_created_lm_by()
       RETURNS trigger
     AS $body$
     BEGIN
+
+    -- SHOULD EXECUTE BEFORE INSERT / UPDATE
+
+    IF TG_OP = 'INSERT' THEN
+    	NEW.created := current_timestamp;
+    	NEW.createdby := current_user;
+    END IF;
+    
+    NEW.lastmodified := current_timestamp;
+    NEW.lastmodifiedby := current_user;
+    
+    RETURN NEW;
     
     END;
     $body$
@@ -85,18 +97,38 @@ add_ts_trigger <- function(schema, prefix, table){
     "CREATE TRIGGER tr_{prefix}{table}_update_created_lm_user
       BEFORE INSERT OR UPDATE ON {schema}.{prefix}{table}
     FOR EACH ROW
-    EXECUTE PROCEDURE {schema}.{prefix}_update_created_lm_user()
+    EXECUTE PROCEDURE {schema}.{prefix}_update_created_lm_by()
     ;"
   )
 }
 
 create_archive_trigger <- function(schema, prefix){
+  stop("Not yet implemented")
   glue::glue(
     "CREATE FUNCTION {schema}.{prefix}_archive_trigger()
       RETURNS trigger
     AS $body$
     BEGIN
     
+    -- SHOULD EXECUTE AFTER INSERT/UPDATE/DELETE
+
+    -- Expects tgop and id columns in front
+
+    IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+      NEW.lastmodified := current_timestamp;
+      NEW.lastmodifiedby := current_user;
+
+      
+    END IF;
+
+    IF TG_OP = 'DELETE' THEN
+      OLD.lastmodified := current_timestamp;
+      OLD.lastmodifiedby := current_user;
+
+      
+       
+
+    END IF;
     
     END;
     $body$
@@ -106,6 +138,7 @@ create_archive_trigger <- function(schema, prefix){
 }
 
 add_archive_trigger <- function(schema, prefix, table){
+  stop("Not yet implemented")
   glue::glue(
     "CREATE TRIGGER tr_{prefix}archive{table}
       AFTER INSERT OR UPDATE OR DELETE ON {schema}.{prefix}{table}
