@@ -9,7 +9,7 @@ create_table_classroom <- function(schema, prefix){
     "CREATE TABLE {schema}.{prefix}classroom ( 
     classroomid serial PRIMARY KEY NOT NULL,
     name text NOT NULL UNIQUE,
-    password text NOT NULL,
+    password text NOT NULL UNIQUE,
     status text NOT NULL DEFAULT 'CREATED',
     claim_per_student integer NOT NULL DEFAULT 1
     );")
