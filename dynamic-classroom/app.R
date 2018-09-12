@@ -225,17 +225,48 @@ server <- function(input, output, session) {
     
     observeEvent(input$yes_modal_1, {
         removeModal()
-        state(2)
+        
+        input_email <- input$email_1 %>% 
+            stringr::str_to_lower() %>%
+            stringr::str_trim()
+        curr_student <- student %>% 
+            filter(tolower(email) == input_email)
+        
+        if (curr_student %>% collect() %>% nrow() > 0) {
+            # found student
+            
+            active_student(curr_student %>% pull(studentid))
+        
+            set_student_consent(con = con, schema = "classroom"
+                                , prefix = prefix
+                                , student = active_student()
+                                , consent = "true")
+            set_student_name(con = con, schema = "classroom"
+                             , prefix = prefix
+                             , studentid = active_student()
+                             , name = input$name_1)
+            
+            state(2)
+        } else {
+            # did not find student
+            showNotification(
+                "Your email was not found in the classroom. 
+                Please double check spelling and try again"
+                , type = "error"
+            )
+        }
+        
     })
     
     observeEvent(input$no_modal_1, {
-        state(0)
+        #state(0)
         removeModal()
     })
     
     # state = 2 : Classroom information  --------------------------
     output$page_2 <- renderUI({
         req(state() == 2);
+        
         
         div(
             h3("Your classroom information is below")
