@@ -1,11 +1,18 @@
 library(shiny)
 library(magrittr)
 library(shinycssloaders)
+library(dplyr)
+library(DBI)
+
+cfg <- config::get("database", file = "config.yml", config = "rsconnect")
+con <- do.call(pool::dbPool, cfg)
+
+dbExecute(con, "SET search_path=classroom;")
 
 ui <- fluidPage(
     
     # Application title
-    titlePanel("Old Faithful Geyser Data"),
+    titlePanel("Workshop Classroom"),
     uiOutput("admin_option"),
     uiOutput("page_0") %>% withSpinner(),
     uiOutput("page_1"),
@@ -16,6 +23,26 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
     
+    # helpful functions ------------------------
+    
+    add_classroom <- function(con, schema, prefix, name, password, status) {
+        dbGetQuery(con, glue::glue(
+            "INSERT INTO {schema}.{prefix}classroom
+            (name, password, status)
+            values ('{name}', '{password}','{status}')
+            RETURNING *
+            ;"
+        ))
+    }
+    
+    # useful objects ---------------------------
+    
+    classroom <- tbl(
+        con, 
+        "testclassroom" 
+        )
+    
+    active_class <- reactiveVal(value = NULL, label = "selected_class")
     
     # state model -------------------------------
     
@@ -36,8 +63,9 @@ server <- function(input, output, session) {
         req(state() == 0);
         
         div(
-            h2("Hello")
-            , p("What is going on?")
+            h2("Welcome")
+            , p("To begin, please enter the password that
+                your classroom instructor has provided.")
             , textInput("text_0", "Input Classroom Password:")
             , actionButton("submit_0", "Submit")
         )
@@ -45,7 +73,21 @@ server <- function(input, output, session) {
     
     # check that password matches a classroom
     observeEvent(input$submit_0, {
-        state(1);
+        if (input$text_0 %in% (classroom %>% pull(password))) {
+          selected_record <- classroom %>% filter(password == input$text_0)
+          stopifnot(selected_record %>% collect() %>% nrow() > 0)
+          
+          # keep just ID, so we have to look things up each time
+          # beware deletion of an ID...
+          active_class(selected_record %>% pull(classroomid))
+          state(1);
+        } else {
+          showNotification(
+              "ERROR: This password is invalid. Please try again."
+              , type = "error"
+              , session = session
+          )
+        }
     })
     
     # state = 1 : prompt for name and email  --------------------------
