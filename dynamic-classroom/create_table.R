@@ -1,6 +1,6 @@
 create_schema <- function(schema){
   glue::glue(
-    "CREATE SCHEMA IF NOT EXISTS AUTHORIZATION {schema};"
+    "CREATE SCHEMA IF NOT EXISTS {schema};"
   )
 }
 
@@ -19,7 +19,7 @@ create_table_student <- function(schema, prefix){
   glue::glue(
     "CREATE TABLE {schema}.{prefix}student (
     studentid serial PRIMARY KEY NOT NULL,
-    classroomid integer NOT NULL FOREIGN KEY REFERENCES {schema}.{prefix}classroom (classroomid),
+    classroomid integer NOT NULL REFERENCES {schema}.{prefix}classroom (classroomid),
     name text,
     email text,
     consent boolean NOT NULL DEFAULT false,
@@ -32,10 +32,10 @@ create_table_instance <- function(schema, prefix){
   glue::glue(
     "CREATE TABLE {schema}.{prefix}instance (
     instanceid serial PRIMARY KEY NOT NULL,
-    classroomid integer NOT NULL FOREIGN KEY REFERENCES {schema}.{prefix}classroom (classroomid),
+    classroomid integer NOT NULL REFERENCES {schema}.{prefix}classroom (classroomid),
     identifier text NOT NULL,
     url text NOT NULL,
-    user text NOT NULL,
+    username text NOT NULL,
     password text NOT NULL
     );"
   )
@@ -45,9 +45,9 @@ create_table_claim <- function(schema, prefix){
   glue::glue(
     "CREATE TABLE {schema}.{prefix}claim (
       claimid serial PRIMARY KEY NOT NULL,
-      classroomid integer NOT NULL FOREIGN KEY REFERENCES {schema}.{prefix}classroom (classroomid),
-      instanceid integer NOT NULL FOREIGN KEY REFERENCES {schema}.{prefix}instance (instanceid),
-      studentid integer NOT NULL FOREIGN KEY REFERENCES {schema}.{prefix}student (studentid),
+      classroomid integer NOT NULL REFERENCES {schema}.{prefix}classroom (classroomid),
+      instanceid integer NOT NULL REFERENCES {schema}.{prefix}instance (instanceid),
+      studentid integer NOT NULL REFERENCES {schema}.{prefix}student (studentid),
       cookie text,
       info text
     );"
