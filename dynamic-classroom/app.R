@@ -25,18 +25,20 @@ server <- function(input, output, session) {
     
     # helpful functions ------------------------
     
-    protect_empty <- function(input){
-        if (input %in% c("''", "") || is.null(input) || length(input) == 0) {
-            return("null")
+    protect_empty <- function(input, out_obj="null"){
+        if (input %in% c("''", "") || is.na(input) || 
+            is.null(input) || length(input) == 0) {
+            return(out_obj)
         } else {
             return(input)
         }
     }
-    add_classroom <- function(con, schema, prefix, name, password, status) {
+    add_classroom <- function(con, schema, prefix, name, password, status, descriptiion = NULL) {
+        description <- description %>% glue::single_quote() %>% protect_empty()
         dbGetQuery(con, glue::glue(
             "INSERT INTO {schema}.{prefix}classroom
-            (name, password, status)
-            values ('{name}', '{password}','{status}')
+            (name, password, status, description)
+            values ('{name}', '{password}','{status}', {description})
             RETURNING *
             ;"
         ))
