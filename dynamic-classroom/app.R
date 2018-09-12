@@ -244,6 +244,8 @@ server <- function(input, output, session) {
     output$page_1 <- renderUI({
         req(state() == 1);
         
+        log_event(con, schema, prefix, "Reached state: 1", 
+              classroomid = active_class())
         classid <- as.integer(active_class())
         classroom_record <- classroom %>% filter(classroomid == classid)
         class_name <- classroom_record %>% pull(name)
@@ -261,6 +263,10 @@ server <- function(input, output, session) {
     })
     
     observeEvent(input$submit_1, {
+        log_event(con, schema, prefix, "Submitted name and email", 
+              classroomid = active_class(), 
+              other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
+              )
         showModal(
             modalDialog(
                 div(
@@ -290,6 +296,8 @@ server <- function(input, output, session) {
             
             active_student(curr_student %>% pull(studentid))
         
+            log_event(con, schema, prefix, "Found student", 
+                  classroomid = active_class(), studentid = active_student())
             set_student_consent(con = con, schema = "classroom"
                                 , prefix = prefix
                                 , student = active_student()
@@ -302,6 +310,10 @@ server <- function(input, output, session) {
             state(2)
         } else {
             # did not find student
+            log_event(con, schema, prefix, "User not found!!", 
+                  classroomid = active_class(), 
+                  other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
+                  )
             showNotification(
                 "Your email was not found in the classroom. 
                 Please double check spelling and try again"
@@ -320,12 +332,19 @@ server <- function(input, output, session) {
     output$page_2 <- renderUI({
         req(state() == 2);
         
+        log_event(con, schema, prefix, "Reached state: 2", 
+                  classroomid = active_class(), studentid = active_student())
+        
         current_student <- active_student()
         student_claim <- claim %>% filter(studentid == current_student)
         claim_id <- student_claim %>% pull(instanceid)
         student_instance <- instance %>% 
             filter(instanceid %in% claim_id) %>%
             collect()
+        
+        log_event(con, schema, prefix, "Found instance", 
+                  classroomid = active_class(), studentid = active_student()
+                  , instanceid = student_instance %>% pull(instanceid) %>% .[[1]])
         
         student_url <- student_instance %>% pull(url) %>% .[[1]]
         student_user <- student_instance %>% pull(username) %>% .[[1]]
