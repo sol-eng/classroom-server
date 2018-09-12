@@ -54,6 +54,19 @@ create_table_claim <- function(schema, prefix){
   )
 }
 
+create_table_event <- function(schema, prefix){
+  glue::glue(
+    "CREATE TABLE {schema}.{prefix}event (
+      eventid serial PRIMARY KEY NOT NULL,
+      event text NOT NULL,
+      classroomid integer FOREIGN KEY REFERENCES {schema}.{prefix}classroom (classroomid),
+      instanceid integer FOREIGN KEY REFERENCES {schema}.{prefix}instance (instanceid),
+      studentid integer FOREIGN KEY REFERENCES {schema}.{prefix}student (studentid),
+      other text
+    );"
+  )
+}
+
 add_created_lm_by <- function(schema, prefix, table){
   glue::glue(
     "ALTER TABLE {schema}.{prefix}{table}
