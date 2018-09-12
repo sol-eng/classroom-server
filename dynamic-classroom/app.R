@@ -109,10 +109,16 @@ server <- function(input, output, session) {
     
     classroom <- tbl(
         con, 
-        "testclassroom" 
+        glue("{prefix}classroom")
         )
     
+    student <- tbl(
+        con,
+        glue("{prefix}student")
+    )
+    
     active_class <- reactiveVal(value = NULL, label = "selected_class")
+    active_student <- reactiveVal(value = NULL, label = "selected_student")
     
     # state model -------------------------------
     
@@ -184,7 +190,9 @@ server <- function(input, output, session) {
         showModal(
             modalDialog(
                 div(
-                    p("This application uses cookies to ensure that you have a good user experience. Do you give your consent to do so?")
+                    p("This application uses cookies to ensure 
+                      that you have a good user experience. 
+                      Do you give your consent to do so?")
                 )
                 , title = "Your Information"
                 , footer = div(actionButton("no_modal_1", "No"), actionButton("yes_modal_1", "Yes"))
