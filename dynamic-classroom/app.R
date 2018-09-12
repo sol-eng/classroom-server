@@ -16,10 +16,13 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
     
+    
+    # state model -------------------------------
+    
     state <- reactiveVal(0, label = "state")
     
     output$admin_option <- renderUI({
-        if (session$user %in% c("cole")) {
+        if (req(session$user %in% c("cole"))) {
             actionButton("to_admin_page", "To Admin Page")
         }
     })
@@ -28,7 +31,7 @@ server <- function(input, output, session) {
     })
     
     
-    # state = 0 : prompt for password
+    # state = 0 : prompt for password --------------------------
     output$page_0 <- renderUI({
         req(state() == 0);
         
@@ -45,7 +48,7 @@ server <- function(input, output, session) {
         state(1);
     })
     
-    # state = 1 : prompt for name and email
+    # state = 1 : prompt for name and email  --------------------------
     output$page_1 <- renderUI({
         req(state() == 1);
         
@@ -83,6 +86,7 @@ server <- function(input, output, session) {
         removeModal()
     })
     
+    # state = 2 : Classroom information  --------------------------
     output$page_2 <- renderUI({
         req(state() == 2);
         
@@ -91,7 +95,7 @@ server <- function(input, output, session) {
         )
     })
     
-    
+    # state = 10 : Admin page -----------------------
     output$page_10 <- renderUI({
         req(state() == 10);
         
