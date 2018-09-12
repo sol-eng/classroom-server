@@ -3,9 +3,12 @@ library(magrittr)
 library(shinycssloaders)
 library(dplyr)
 library(DBI)
+library(glue)
 
 cfg <- config::get("database", file = "config.yml", config = "rsconnect")
 con <- do.call(pool::dbPool, cfg)
+
+prefix <- "test"
 
 dbExecute(con, "SET search_path=classroom;")
 
@@ -14,7 +17,7 @@ ui <- fluidPage(
     # Application title
     titlePanel("Workshop Classroom"),
     uiOutput("admin_option"),
-    uiOutput("page_0") %>% withSpinner(),
+    uiOutput("page_0"), # %>% withSpinner(),
     uiOutput("page_1"),
     uiOutput("page_2"),
     
