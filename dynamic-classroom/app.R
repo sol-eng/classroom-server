@@ -81,6 +81,47 @@ server <- function(input, output, session) {
             "
         ))
     }
+    add_instance <- function(con, schema,
+                             prefix, classroomid, identifier, url,
+                             username, password,
+                             dryrun = FALSE) {
+        identifier <- identifier %>% glue::single_quote()
+        url <- url %>% glue::single_quote()
+        username <- username %>% glue::single_quote()
+        password <- password %>% glue::single_quote()
+        
+        query <- glue::glue(
+            "INSERT INTO {schema}.{prefix}instance
+            (classroomid, identifier, url, username, password)
+            VALUES ({classroomid}, {identifier}, {url}, {username}, {password})
+            RETURNING *
+            ;"
+        )
+        
+        if (!dryrun) {
+            res <- dbGetQuery(con, query)
+            return(res)
+        } else {
+            return(query)
+        }
+    }
+    add_claim <- function(con, schema, prefix,
+                          classroomid, instanceid, studentid
+                          , dryrun = FALSE) {
+        query <- glue::glue(
+            "INSERT INTO {schema}.{prefix}claim
+            (classroomid, instanceid, studentid)
+            VALUES ({classroomid},{instanceid},{studentid})
+            RETURNING *
+            ;"
+            )
+        if (!dryrun) {
+            res <- dbGetQuery(con, query)
+            return(res)
+        } else {
+            return(query)
+        }
+    }
     add_student <- function(con, schema, 
                             prefix, classroomid, email, name = NULL, 
                             dryrun = FALSE) {
