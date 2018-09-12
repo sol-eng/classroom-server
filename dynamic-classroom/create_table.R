@@ -160,3 +160,29 @@ add_archive_trigger <- function(schema, prefix, table){
     ;"
   )
 }
+
+
+create_all <- function(schema, prefix) {
+  dbExecute(con,create_schema(schema));
+  
+  dbExecute(con,create_table_classroom(schema, prefix));
+  dbExecute(con,create_table_student(schema, prefix));
+  dbExecute(con,create_table_instance(schema, prefix));
+  dbExecute(con,create_table_claim(schema, prefix));
+  dbExecute(con,create_table_event(schema, prefix));
+  
+  dbExecute(con, create_ts_trigger(schema, prefix))
+  
+  dbExecute(con, add_created_lm_by(schema,prefix, "claim"))
+  dbExecute(con, add_created_lm_by(schema,prefix, "classroom"))
+  dbExecute(con, add_created_lm_by(schema,prefix, "event"))
+  dbExecute(con, add_created_lm_by(schema,prefix, "instance"))
+  dbExecute(con, add_created_lm_by(schema,prefix, "student"))
+  
+  dbExecute(con, add_ts_trigger(schema, prefix, "claim"))
+  dbExecute(con, add_ts_trigger(schema, prefix, "classroom"))
+  dbExecute(con, add_ts_trigger(schema, prefix, "event"))
+  dbExecute(con, add_ts_trigger(schema, prefix, "instance"))
+  dbExecute(con, add_ts_trigger(schema, prefix, "student"))
+
+}
