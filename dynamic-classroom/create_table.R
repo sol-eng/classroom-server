@@ -59,9 +59,9 @@ create_table_event <- function(schema, prefix){
     "CREATE TABLE {schema}.{prefix}event (
       eventid serial PRIMARY KEY NOT NULL,
       event text NOT NULL,
-      classroomid integer FOREIGN KEY REFERENCES {schema}.{prefix}classroom (classroomid),
-      instanceid integer FOREIGN KEY REFERENCES {schema}.{prefix}instance (instanceid),
-      studentid integer FOREIGN KEY REFERENCES {schema}.{prefix}student (studentid),
+      classroomid integer REFERENCES {schema}.{prefix}classroom (classroomid),
+      instanceid integer REFERENCES {schema}.{prefix}instance (instanceid),
+      studentid integer REFERENCES {schema}.{prefix}student (studentid),
       other text
     );"
   )
@@ -70,10 +70,10 @@ create_table_event <- function(schema, prefix){
 add_created_lm_by <- function(schema, prefix, table){
   glue::glue(
     "ALTER TABLE {schema}.{prefix}{table}
-    ADD COLUMN IF NOT EXISTS created timestamp NOT NULL DEFAULT now(),
-    ADD COLUMN IF NOT EXISTS createdby text NOT NULL DEFAULT current_user,
-    ADD COLUMN IF NOT EXISTS lastmodified timestamp NOT NULL DEFAULT now(),
-    ADD COLUMN IF NOT EXISTS lastmodifiedby text NOT NULL DEFAULT current_user
+    ADD COLUMN created timestamp NOT NULL DEFAULT now(),
+    ADD COLUMN createdby text NOT NULL DEFAULT current_user,
+    ADD COLUMN lastmodified timestamp NOT NULL DEFAULT now(),
+    ADD COLUMN lastmodifiedby text NOT NULL DEFAULT current_user
     ;
     "
   )
