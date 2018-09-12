@@ -4,6 +4,7 @@ library(shinycssloaders)
 library(dplyr)
 library(DBI)
 library(glue)
+library(odbc)
 
 cfg <- config::get("database", file = "config.yml", config = "rsconnect")
 con <- do.call(pool::dbPool, cfg)
