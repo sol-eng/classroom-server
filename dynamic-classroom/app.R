@@ -171,7 +171,7 @@ server <- function(input, output, session) {
             state(2)
         } else {
             # did not find student
-            log_event(con, schema, prefix, "User not found!!", 
+            log_event(con, schema, prefix, "WARNING: User not found!!", 
                   classroomid = active_class(), 
                   other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
                   )
