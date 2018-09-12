@@ -58,10 +58,28 @@ server <- function(input, output, session) {
             "
         ))
     }
-    update_student <- function(
-        con, schema, prefix, classroomid, studentid,
-        name, consent, cookie
-    )
+    set_student_cookie <- function(con, schema, prefix, studentid, cookie) {
+        cookie <- cookie %>% glue::single_quote() %>% protect_empty()
+        dbGetQuery(con, glue::glue(
+            "UPDATE {schema}.{prefix}student
+            SET cookie = {cookie}
+            WHERE studentid = {studentid}
+            RETURNING *
+            ;
+            "
+        ))
+    }
+    set_student_consent <- function(con, schema, prefix, studentid, consent = NULL) {
+        consent <- consent %>% protect_empty("false")
+        dbGetQuery(con, glue::glue(
+            "UPDATE {schema}.{prefix}student
+            SET consent = {consent}
+            WHERE studentid = {studentid}
+            RETURNING *
+            ;
+            "
+        ))
+    }
     add_student <- function(con, schema, 
                             prefix, classroomid, email, name = NULL, 
                             dryrun = FALSE) {
