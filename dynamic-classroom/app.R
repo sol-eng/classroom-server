@@ -25,6 +25,13 @@ server <- function(input, output, session) {
     
     # helpful functions ------------------------
     
+    protect_empty <- function(input){
+        if (input %in% c("''", "") || is.null(input) || length(input) == 0) {
+            return("null")
+        } else {
+            return(input)
+        }
+    }
     add_classroom <- function(con, schema, prefix, name, password, status) {
         dbGetQuery(con, glue::glue(
             "INSERT INTO {schema}.{prefix}classroom
@@ -33,6 +40,32 @@ server <- function(input, output, session) {
             RETURNING *
             ;"
         ))
+    }
+    
+    log_event <- function(con, schema, prefix, event,
+                          classroomid="", instanceid="",
+                          studentid="", other="", dryrun=FALSE) {
+        event <- glue::single_quote(event) %>% protect_empty()
+        other <- glue::single_quote(other) %>% protect_empty()
+        classroomid <- classroomid %>% protect_empty()
+        instanceid <- instanceid %>% protect_empty()
+        studentid <- studentid %>% protect_empty()
+        other <- other %>% protect_empty()
+        
+        query <- glue::glue(
+            "INSERT INTO {schema}.{prefix}event
+            (event, classroomid, instanceid, studentid, other)
+            VALUES ({event}, {classroomid}, {instanceid}
+            , {studentid}, {other})
+            RETURNING *
+            ;"
+        )
+        if (!dryrun) {
+            res <- dbGetQuery(con, query)
+            return(res)
+        } else {
+            return(query)
+        }
     }
     
     # useful objects ---------------------------
