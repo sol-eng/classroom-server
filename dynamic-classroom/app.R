@@ -319,9 +319,23 @@ server <- function(input, output, session) {
     output$page_2 <- renderUI({
         req(state() == 2);
         
+        current_student <- active_student()
+        student_claim <- claim %>% filter(studentid == current_student)
+        claim_id <- student_claim %>% pull(instanceid)
+        student_instance <- instance %>% 
+            filter(instanceid %in% claim_id) %>%
+            collect()
         
+        student_url <- student_instance %>% pull(url) %>% .[[1]]
+        student_user <- student_instance %>% pull(username) %>% .[[1]]
+        student_pass <- student_instance %>% pull(password) %>% .[[1]]
         div(
-            h3("Your classroom information is below")
+            h3("Your classroom information is below"),
+            a(paste("URL:",student_url)
+              ,href=as.character(student_url)
+              , target="_blank"),
+            p(paste("User:",student_user)),
+           p(paste("Password:", student_pass)) 
         )
     })
     
