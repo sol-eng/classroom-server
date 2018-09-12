@@ -43,6 +43,41 @@ server <- function(input, output, session) {
             ;"
         ))
     }
+   
+    set_student_name <- function(con, schema, prefix, studentid,  name) {
+        name <- name %>% glue::single_quote() %>% protect_empty()
+        dbGetQuery(con, glue::glue(
+            "UPDATE {schema}.{prefix}student
+            SET name = {name}
+            WHERE studentid = {studentid}
+            RETURNING *
+            ;
+            "
+        ))
+    }
+    update_student <- function(
+        con, schema, prefix, classroomid, studentid,
+        name, consent, cookie
+    )
+    add_student <- function(con, schema, 
+                            prefix, classroomid, email, name = NULL, 
+                            dryrun = FALSE) {
+        name <- name %>% glue::single_quote() %>% protect_empty()
+        email <- email %>% glue::single_quote()
+        query <- glue::glue(
+            "INSERT INTO {schema}.{prefix}student
+            (classroomid, name, email)
+            VALUES ({classroomid}, {name}, {email})
+            RETURNING *
+            ;"
+        )
+        if (!dryrun) {
+            res <-  dbGetQuery(con, query)
+            return(res)
+        } else {
+            return(query)
+        }
+    }
     
     log_event <- function(con, schema, prefix, event,
                           classroomid="", instanceid="",
