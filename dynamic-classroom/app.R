@@ -129,8 +129,14 @@ server <- function(input, output, session) {
     output$page_1 <- renderUI({
         req(state() == 1);
         
+        classid <- as.integer(active_class())
+        classroom_record <- classroom %>% filter(classroomid == classid)
+        class_name <- classroom_record %>% pull(name)
+        class_desc <- classroom_record %>% pull(description)
+        
         div(
-            h2("Welcome to the classroom!"),
+            h2(glue::glue("{class_name}")),
+            div(class_desc %>% protect_empty(NULL)),
             p("Please enter your name and email address"),
             textInput("name_1", "Name: "),
             textInput("email_1", "Email: "),
