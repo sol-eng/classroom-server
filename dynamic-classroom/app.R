@@ -180,6 +180,16 @@ server <- function(input, output, session) {
         glue("{prefix}student")
     )
     
+    claim <- tbl(
+        con,
+        glue("{prefix}claim")
+    )
+    
+    instance <- tbl(
+        con,
+        glue("{prefix}instance")
+    )
+    
     active_class <- reactiveVal(value = NULL, label = "selected_class")
     active_student <- reactiveVal(value = NULL, label = "selected_student")
     
