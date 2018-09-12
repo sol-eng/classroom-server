@@ -10,6 +10,7 @@ cfg <- config::get("database", file = "config.yml", config = "rsconnect")
 con <- do.call(pool::dbPool, cfg)
 
 prefix <- "test"
+schema <- "classroom"
 
 dbExecute(con, "SET search_path=classroom;")
 
