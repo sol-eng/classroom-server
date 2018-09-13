@@ -8,7 +8,7 @@
             return(input)
         }
     }
-    add_classroom <- function(con, schema, prefix, name, password, status, descriptiion = NULL) {
+    add_classroom <- function(con, schema, prefix, name, password, status, description = NULL) {
         description <- description %>% glue::single_quote() %>% protect_empty()
         dbGetQuery(con, glue::glue(
             "INSERT INTO {schema}.{prefix}classroom
@@ -64,13 +64,15 @@
     }
     add_student <- function(con, schema, 
                             prefix, classroomid, email, name = NULL, 
+                            other = NULL,
                             dryrun = FALSE) {
         name <- name %>% glue::single_quote() %>% protect_empty()
         email <- email %>% glue::single_quote()
+        other <- other %>% glue::single_quote() %>% protect_empty()
         query <- glue::glue(
             "INSERT INTO {schema}.{prefix}student
-            (classroomid, name, email)
-            VALUES ({classroomid}, {name}, {email})
+            (classroomid, name, email, other)
+            VALUES ({classroomid}, {name}, {email}, {other})
             RETURNING *
             ;"
         )
