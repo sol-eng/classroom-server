@@ -5,9 +5,9 @@ account: cole
 server: colorado.rstudio.com
 hostUrl: http://colorado.rstudio.com:3939/__api__
 appId: 1405
-bundleId: 16812
-url: http://colorado.rstudio.com:3939/content/1405/
-when: 1536821125.83005
+bundleId: 16818
+url: http://colorado.rstudio.com:3939/classroom-assignment/
+when: 1536822868.80476
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: add_instances_20180913.html|add_instances.Rmd|attendees_v10.xlsx|bg_stderr.log|bg_stdout.log|create_table.R|print|spglobal-final-1.csv|user_parse_20180913.html|user_parse.Rmd|www/rstudio.css|www/images/rstudio-conf.jpg|www/images/rstudio.png
+ignoredFiles: add_instances_20180913.html|add_instances.Rmd|attendees_v10.xlsx|bg_stderr.log|bg_stdout.log|create_table.R|print|profiling.Rprofvis|spglobal-final-1.csv|user_parse_20180913.html|user_parse.Rmd|www/rstudio.css|www/images/rstudio-conf.jpg|www/images/rstudio.png
