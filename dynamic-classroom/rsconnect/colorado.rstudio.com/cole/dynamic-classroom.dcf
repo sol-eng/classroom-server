@@ -1,0 +1,13 @@
+name: dynamic-classroom
+title: dynamic-classroom
+username: cole
+account: cole
+server: colorado.rstudio.com
+hostUrl: http://colorado.rstudio.com:3939/__api__
+appId: 1405
+bundleId: 16800
+url: http://colorado.rstudio.com:3939/content/1405/
+when: 1536808707.9874
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: create_table.R|www/rstudio.css|www/images/rstudio-conf.jpg|www/images/rstudio.png
