@@ -64,6 +64,7 @@ create_table_event <- function(schema, prefix){
       classroomid integer REFERENCES {schema}.{prefix}classroom (classroomid),
       instanceid integer REFERENCES {schema}.{prefix}instance (instanceid),
       studentid integer REFERENCES {schema}.{prefix}student (studentid),
+      cookie text, 
       other text
     );"
   )
