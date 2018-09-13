@@ -17,7 +17,7 @@ con <- do.call(pool::dbPool, cfg)
 schema <- "classroom"
 prefix <- "v1_"
 classroomid <- 1
-raw_instance_data <- readr::read_csv("spglobal-final-1.csv", col_names = c("url", "username", "password"))
+raw_instance_data <- readr::read_csv("spglobal-final-2.csv", col_names = c("url", "username", "password"))
 
 ```
 
@@ -39,7 +39,7 @@ dbGetQuery(con,
              "WITH students as (
               select studentid, classroomid, row_number() over (partition by true) from {schema}.{prefix}student
               WHERE classroomid = {classroomid}
-              AND studentid NOT IN (select studentid FROM {schema}.{prefix}student where classroomid = {classroomid})
+              AND studentid NOT IN (select studentid FROM {schema}.{prefix}claim where classroomid = {classroomid})
              ), instances as (
               select instanceid, classroomid, row_number() over (partition by true) from {schema}.{prefix}instance
               WHERE classroomid = {classroomid}
@@ -54,4 +54,5 @@ dbGetQuery(con,
 
 # clear claims if necessary
 # dbGetQery(con, glue::glue("DELETE FROM {schema}.{prefix}claim WHERE classroomid = {classroomid} RETURNING *;"))
+
 ```
