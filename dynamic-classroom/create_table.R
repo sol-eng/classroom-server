@@ -24,7 +24,8 @@ create_table_student <- function(schema, prefix){
     name text,
     email text NOT NULL UNIQUE,
     consent boolean NOT NULL DEFAULT false,
-    cookie text
+    cookie text,
+    other text
     );"
   )
 }
