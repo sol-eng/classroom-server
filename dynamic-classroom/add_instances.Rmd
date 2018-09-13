@@ -39,9 +39,11 @@ dbGetQuery(con,
              "WITH students as (
               select studentid, classroomid, row_number() over (partition by true) from {schema}.{prefix}student
               WHERE classroomid = {classroomid}
+              AND studentid NOT IN (select studentid FROM {schema}.{prefix}student where classroomid = {classroomid})
              ), instances as (
               select instanceid, classroomid, row_number() over (partition by true) from {schema}.{prefix}instance
               WHERE classroomid = {classroomid}
+              AND instanceid NOT IN (select instanceid from {schema}.{prefix}claim where classroomid = {classroomid})
              )
              INSERT INTO {schema}.{prefix}claim (studentid, classroomid, instanceid)
              SELECT a.studentid, a.classroomid, b.instanceid
