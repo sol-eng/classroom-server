@@ -78,13 +78,11 @@ server <- function(input, output, session) {
     
     state <- reactiveVal(0, label = "state")
     
-    output$admin_option <- renderUI({
         if (req(session$user %in% c("cole") || as.logical(Sys.getenv("ENABLE_ADMIN")))) {
-            actionButton("to_admin_page", "To Admin Page")
             # only define items in an admin context 
             #(so we do not waste bandwidth on the client / server)
             classroom_vector <- reactivePoll(
-                5000, 
+                10000, 
                 session = session
                 , checkFunc = function(){
                     message("Checking for classroom updates")
@@ -99,16 +97,21 @@ server <- function(input, output, session) {
             )
             
             event_table <- reactivePoll(
-                2000,
+                5000,
                 session = session,
                 checkFunc = function(){
                     message("Checking for event updates")
                     dbGetQuery(con, glue("SELECT max(lastmodified) FROM {schema}.{prefix}event;"))
-                    },
+                },
                 valueFunc = function(){
                     event %>% collect()
                 }
             )
+        }
+    
+    output$admin_option <- renderUI({
+        if (req(session$user %in% c("cole") || as.logical(Sys.getenv("ENABLE_ADMIN")))) {
+            actionButton("to_admin_page", "To Admin Page")
             }
         })
     observeEvent(input$to_admin_page, {
@@ -351,6 +354,11 @@ server <- function(input, output, session) {
         
         req(input$admin_class)
         admin_selected_class <- input$admin_class
+        
+        output$event_dt <- DT::renderDataTable(
+            event_table(), server = TRUE
+        )
+        
         div(
           tabsetPanel(
               tabPanel("Student", {
@@ -390,6 +398,9 @@ server <- function(input, output, session) {
                           ) %>%
                           collect()
                   )
+              }),
+              tabPanel("Events", {
+                  DT::dataTableOutput("event_dt")
               })
           )
         )
