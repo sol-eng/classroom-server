@@ -366,7 +366,7 @@ server <- function(input, output, session) {
         output$event_dt <- DT::renderDataTable(
             event %>%
                 filter(classroomid == admin_selected_class || (is.na(classroomid) && admin_null_event)) %>%
-                select(eventid, event, session, classroomid, instanceid, studentid) %>%
+                select(eventid, event, session, classroomid, instanceid, studentid, lastmodified) %>%
                 left_join(student %>% select(studentid, classroomid, name, email)
                           , by = c("classroomid", "studentid")) %>%
                 collect() %>%
