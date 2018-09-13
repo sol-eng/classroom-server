@@ -72,7 +72,7 @@ server <- function(input, output, session) {
     
     active_cookie <- reactiveVal(value = NULL, label = "current_cookie")
     
-    
+    refresh <- reactiveVal(value = 0, label = "force_refresh")
     
     # state model -------------------------------
     
@@ -346,8 +346,13 @@ server <- function(input, output, session) {
         div(
             h3("Admin page!"),
             actionButton("admin_back_to_app", "Back to App"),
+            actionButton("force_refresh", "Refresh Events"),
             selectizeInput("admin_class", "Select Class", choices = classroom_vector())
         )
+    })
+    
+    observeEvent(input$force_refresh, {
+        refresh(refresh() + 1)
     })
     output$page_10b <- renderUI({
         req(state() == 10);
