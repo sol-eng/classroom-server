@@ -53,7 +53,7 @@
         ))
     }
     set_student_cookie <- function(con, schema, prefix, studentid, cookie = NULL) {
-      cookie <- cookie %>% single_quote() %>% protect_empty()
+      cookie <- cookie %>% glue::single_quote() %>% protect_empty()
       dbGetQuery(con, glue::glue(
         "UPDATE {schema}.{prefix}student
         SET cookie = {cookie}
