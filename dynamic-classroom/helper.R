@@ -157,3 +157,9 @@
         }
     }
     
+    
+#explore <- function(a, b) {
+#  query <- glue::glue("some string {a} with another string {b}")
+#  
+#  callr::r_bg(function(query){print(query)}, args = list(query = query), stdout = print)
+#}
