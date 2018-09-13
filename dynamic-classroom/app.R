@@ -23,6 +23,7 @@ ui <- fluidPage(
     # Application title
     initShinyCookie("cookie"),
     titlePanel("Workshop Classroom"),
+    actionButton("back_to_0", "Home"),
     uiOutput("admin_option"),
     uiOutput("page_0"), # %>% withSpinner(),
     uiOutput("page_1"),
@@ -71,6 +72,10 @@ server <- function(input, output, session) {
     })
     observeEvent(input$to_admin_page, {
         state(10);
+    })
+    
+    observeEvent(input$back_to_0, {
+        state(0);
     })
     
     
