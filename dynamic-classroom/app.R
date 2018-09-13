@@ -66,6 +66,22 @@ server <- function(input, output, session) {
     
     active_cookie <- reactiveVal(value = NULL, label = "current_cookie")
     
+    classroom_vector <- reactivePoll(
+        5000, 
+        session = session
+        , checkFunc = function(){
+            print("Checking classroom edits")
+            dbGetQuery(
+                con, 
+                glue("SELECT max(lastmodified) FROM {schema}.{prefix}classroom;")
+            )
+        }
+        , valueFunc = function(){
+            as.list(set_names(classroom %>% pull(classroomid), classroom %>% pull(name)))
+        }
+    )
+    
+    
     # state model -------------------------------
     
     state <- reactiveVal(0, label = "state")
