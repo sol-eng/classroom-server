@@ -71,7 +71,7 @@ server <- function(input, output, session) {
     state <- reactiveVal(0, label = "state")
     
     output$admin_option <- renderUI({
-        if (req(session$user %in% c("cole"))) {
+        if (req(session$user %in% c("cole") || as.logical(Sys.getenv("ENABLE_ADMIN")))) {
             actionButton("to_admin_page", "To Admin Page")
         }
     })
