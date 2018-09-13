@@ -34,7 +34,8 @@ ui <- fluidPage(
     uiOutput("page_1"),
     uiOutput("page_2"),
     
-    uiOutput("page_10")
+    uiOutput("page_10"),
+    uiOutput("page_10b")
 )
 
 server <- function(input, output, session) {
@@ -322,7 +323,56 @@ server <- function(input, output, session) {
         
         div(
             h3("Admin page!"),
-            actionButton("admin_back_to_app", "Back to App")
+            actionButton("admin_back_to_app", "Back to App"),
+            selectizeInput("admin_class", "Select Class", choices = classroom_vector())
+        )
+    })
+    output$page_10b <- renderUI({
+        req(state() == 10);
+        
+        req(input$admin_class)
+        admin_selected_class <- input$admin_class
+        div(
+          tabsetPanel(
+              tabPanel("Student", {
+                  DT::datatable(
+                      student %>% 
+                          filter(classroomid == admin_selected_class) %>%
+                          select(studentid, classroomid, name, email, consent, cookie) %>% 
+                          collect()
+                  )
+              }),
+              tabPanel("Instance", {
+                  DT::datatable(
+                      instance %>%
+                          filter(classroomid == admin_selected_class) %>%
+                          select(instanceid, classroomid, identifier, url, username, password) %>%
+                          collect()
+                  )
+              }),
+              tabPanel("Claim", {
+                  DT::datatable(
+                      claim %>%
+                          filter(classroomid == admin_selected_class) %>%
+                          select(classroomid, instanceid, studentid, cookie, info) %>%
+                          collect()
+                  )
+              }),
+              tabPanel("Join", {
+                  DT::datatable(
+                      student %>% filter(classroomid == admin_selected_class) %>%
+                          select(studentid, classroomid, name, email) %>%
+                          left_join(
+                              claim %>% select(classroomid, studentid, instanceid), 
+                              by = c("classroomid", "studentid")) %>%
+                          left_join(
+                              instance %>% select(instanceid, classroomid, identifier, url, username, password)
+                              , by = c("classroomid", "instanceid")
+                          ) %>%
+                          collect()
+                  )
+              })
+          )
         )
     })
     
