@@ -61,6 +61,7 @@ create_table_event <- function(schema, prefix){
     "CREATE TABLE {schema}.{prefix}event (
       eventid serial PRIMARY KEY NOT NULL,
       event text NOT NULL,
+      session text NOT NULL,
       classroomid integer REFERENCES {schema}.{prefix}classroom (classroomid),
       instanceid integer REFERENCES {schema}.{prefix}instance (instanceid),
       studentid integer REFERENCES {schema}.{prefix}student (studentid),
