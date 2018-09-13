@@ -5,6 +5,8 @@ library(dplyr)
 library(DBI)
 library(glue)
 library(odbc)
+library(uuid)
+library(shinycookie)
 
 source("helper.R")
 
@@ -19,6 +21,7 @@ dbExecute(con, "SET search_path=classroom;")
 ui <- fluidPage(
     
     # Application title
+    initShinyCookie("cookie"),
     titlePanel("Workshop Classroom"),
     uiOutput("admin_option"),
     uiOutput("page_0"), # %>% withSpinner(),
@@ -54,6 +57,8 @@ server <- function(input, output, session) {
     
     active_class <- reactiveVal(value = NULL, label = "selected_class")
     active_student <- reactiveVal(value = NULL, label = "selected_student")
+    
+    active_cookie <- reactiveVal(value = NULL, label = "current_cookie")
     
     # state model -------------------------------
     
@@ -167,6 +172,16 @@ server <- function(input, output, session) {
                              , prefix = prefix
                              , studentid = active_student()
                              , name = input$name_1)
+            
+            if (is.null(input$cookie[[glue("classroom{active_class()}")]])) {
+                new_uuid <- UUIDgenerate()
+                updateCookie(session,
+                         !!!as.list(set_names(new_uuid, glue("classroom{active_class()}")))
+                         )
+                print("Updated cookie!")
+            } else {
+                print("cookie already exists")
+            }
             
             state(2)
         } else {
