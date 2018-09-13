@@ -125,9 +125,10 @@
     }
     log_event <- function(con, schema, prefix, event,
                           classroomid="", instanceid="",
-                          studentid="", other="", dryrun=FALSE) {
+                          studentid="", other="", cookie="", dryrun=FALSE) {
         event <- glue::single_quote(event) %>% protect_empty()
         other <- glue::single_quote(other) %>% protect_empty()
+        cookie <- cookie %>% glue::single_quote() %>% protect_empty()
         classroomid <- classroomid %>% protect_empty()
         instanceid <- instanceid %>% protect_empty()
         studentid <- studentid %>% protect_empty()
@@ -135,9 +136,9 @@
         
         query <- glue::glue(
             "INSERT INTO {schema}.{prefix}event
-            (event, classroomid, instanceid, studentid, other)
+            (event, classroomid, instanceid, studentid, other, cookie)
             VALUES ({event}, {classroomid}, {instanceid}
-            , {studentid}, {other})
+            , {studentid}, {other}, {cookie})
             RETURNING *
             ;"
         )
