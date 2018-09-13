@@ -10,13 +10,13 @@ library(shiny)
 
 source("helper.R")
 
-cfg <- config::get("database", file = "config.yml", config = "rsconnect")
+cfg <- config::get("database", file = "config.yml")
 con <- do.call(pool::dbPool, cfg)
 
-prefix <- "test"
+prefix <- "v1_"
 schema <- "classroom"
 
-dbExecute(con, "SET search_path=classroom;")
+dbExecute(con, glue("SET search_path={schema};"))
 
 onStop(fun = function(){
     message("This is onStop firing at the application level")
@@ -86,7 +86,7 @@ server <- function(input, output, session) {
             return(input)
         }
     }
-        if (req(safe_logical(session$user %in% c("cole")) || safe_logical(Sys.getenv("ENABLE_ADMIN", unset = "FALSE")))) {
+        if (req(safe_logical(session$user %in% c("cole")))) {
             # only define items in an admin context 
             #(so we do not waste bandwidth on the client / server)
             classroom_vector <- reactivePoll(
@@ -108,7 +108,7 @@ server <- function(input, output, session) {
     
     message("Rendering admin option")
     output$admin_option <- renderUI({
-        if (req(safe_logical(session$user %in% c("cole")) || safe_logical(Sys.getenv("ENABLE_ADMIN", unset = "FALSE")))) {
+        if (req(safe_logical(session$user %in% c("cole")))) {
             actionButton("to_admin_page", "To Admin Page")
             }
         })
