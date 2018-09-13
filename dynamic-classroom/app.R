@@ -156,6 +156,8 @@ server <- function(input, output, session) {
                     , cookie = active_cookie())
           state(1);
         } else {
+            log_event(con = con, schema = schema, prefix = prefix, event = "WARNING: Password attempt failed"
+                      , session = session$token)
           showNotification(
               "ERROR: This password is invalid. Please try again."
               , type = "error"
