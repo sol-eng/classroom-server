@@ -52,6 +52,26 @@
             "
         ))
     }
+    add_student <- function(con, schema, 
+                            prefix, classroomid, email, name = NULL, 
+                            dryrun = FALSE) {
+        name <- name %>% glue::single_quote() %>% protect_empty()
+        email <- email %>% glue::single_quote()
+        query <- glue::glue(
+            "INSERT INTO {schema}.{prefix}student
+            (classroomid, name, email)
+            VALUES ({classroomid}, {name}, {email})
+            RETURNING *
+            ;"
+        )
+        if (!dryrun) {
+            res <-  dbGetQuery(con, query)
+            return(res)
+        } else {
+            return(query)
+        }
+    }
+    
     add_instance <- function(con, schema,
                              prefix, classroomid, identifier, url,
                              username, password,
@@ -93,26 +113,6 @@
             return(query)
         }
     }
-    add_student <- function(con, schema, 
-                            prefix, classroomid, email, name = NULL, 
-                            dryrun = FALSE) {
-        name <- name %>% glue::single_quote() %>% protect_empty()
-        email <- email %>% glue::single_quote()
-        query <- glue::glue(
-            "INSERT INTO {schema}.{prefix}student
-            (classroomid, name, email)
-            VALUES ({classroomid}, {name}, {email})
-            RETURNING *
-            ;"
-        )
-        if (!dryrun) {
-            res <-  dbGetQuery(con, query)
-            return(res)
-        } else {
-            return(query)
-        }
-    }
-    
     log_event <- function(con, schema, prefix, event,
                           classroomid="", instanceid="",
                           studentid="", other="", dryrun=FALSE) {
