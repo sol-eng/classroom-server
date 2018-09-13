@@ -346,6 +346,7 @@ server <- function(input, output, session) {
             h3("Admin page!"),
             actionButton("admin_back_to_app", "Back to App"),
             actionButton("force_refresh", "Refresh Events"),
+            checkboxInput("show_null_events", "Show Pre-Classroom Events", value = FALSE),
             selectizeInput("admin_class", "Select Class", choices = classroom_vector())
         )
     })
@@ -358,10 +359,11 @@ server <- function(input, output, session) {
         
         req(input$admin_class)
         admin_selected_class <- input$admin_class
+        admin_null_event <- input$show_null_events
         
         output$event_dt <- DT::renderDataTable(
             event %>%
-                filter(classroomid == admin_selected_class) %>%
+                filter(classroomid == admin_selected_class || (is.na(classroomid) && admin_null_event)) %>%
                 select(eventid, event, session, classroomid, instanceid, studentid) %>%
                 left_join(student %>% select(studentid, classroomid, name, email)
                           , by = c("classroomid", "studentid")) %>%
