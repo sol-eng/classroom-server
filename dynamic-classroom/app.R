@@ -78,6 +78,9 @@ server <- function(input, output, session) {
     output$page_0 <- renderUI({
         req(state() == 0);
         
+        log_event(con = con, schema = schema, prefix = prefix, event = "Reached state: 0"
+                  , session = session$token)
+        
         div(
             h2("Welcome")
             , p("To begin, please enter the password that
@@ -91,11 +94,18 @@ server <- function(input, output, session) {
     observeEvent(input$submit_0, {
         if (input$text_0 %in% (classroom %>% pull(password))) {
           selected_record <- classroom %>% filter(password == input$text_0)
-          stopifnot(selected_record %>% collect() %>% nrow() > 0)
-          
+          if (selected_record %>% collect() %>% nrow() == 0) {
+              state(0)
+          }
           # keep just ID, so we have to look things up each time
           # beware deletion of an ID...
           active_class(selected_record %>% pull(classroomid))
+          
+          active_cookie(input$cookie[[glue("classroom{active_class()}")]])
+          
+          log_event(con = con, schema = schema, prefix = prefix, event = "Entering classroom"
+                    , session = session$token, classroomid = active_class()
+                    , cookie = active_cookie())
           state(1);
         } else {
           showNotification(
@@ -111,7 +121,9 @@ server <- function(input, output, session) {
         req(state() == 1);
         
         log_event(con, schema, prefix, "Reached state: 1", 
-              classroomid = active_class())
+                  session = session$token,
+              classroomid = active_class(),
+              cookie = active_cookie())
         classid <- as.integer(active_class())
         classroom_record <- classroom %>% filter(classroomid == classid)
         class_name <- classroom_record %>% pull(name)
@@ -130,7 +142,9 @@ server <- function(input, output, session) {
     
     observeEvent(input$submit_1, {
         log_event(con, schema, prefix, "Submitted name and email", 
+                  session = session$token,
               classroomid = active_class(), 
+              cookie = active_cookie(),
               other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
               )
         showModal(
@@ -162,8 +176,10 @@ server <- function(input, output, session) {
             
             active_student(curr_student %>% pull(studentid))
         
-            log_event(con, schema, prefix, "Found student", 
-                  classroomid = active_class(), studentid = active_student())
+            log_event(con, schema, prefix, event = "Found student", 
+                      session = session$token,
+                  classroomid = active_class(), studentid = active_student(),
+                  cookie = active_cookie())
             set_student_consent(con = con, schema = "classroom"
                                 , prefix = prefix
                                 , student = active_student()
@@ -174,20 +190,39 @@ server <- function(input, output, session) {
                              , name = input$name_1)
             
             if (is.null(input$cookie[[glue("classroom{active_class()}")]])) {
-                new_uuid <- UUIDgenerate()
+                active_cookie(UUIDgenerate())
                 updateCookie(session,
-                         !!!as.list(set_names(new_uuid, glue("classroom{active_class()}")))
+                         !!!as.list(set_names(active_cookie(), glue("classroom{active_class()}")))
                          )
-                print("Updated cookie!")
+                set_student_cookie(con, schema = schema, prefix = prefix
+                                   , studentid = active_student()
+                                   , cookie = active_cookie())
+                log_event(con = con, schema = schema, prefix = prefix, event = "Set cookie"
+                          , session = session$token
+                          , classroomid = active_class()
+                          , studentid = active_student()
+                          , cookie = active_cookie()
+                          )
             } else {
-                print("cookie already exists")
+                active_cookie(input$cookie[[glue("classroom{active_class()}")]])
+                log_event(con = con, schema = schema, prefix = prefix, event = "Cookie already exists"
+                          , session = session$token
+                          , classroomid = active_class()
+                          , studentid = active_student()
+                          , cookie = active_cookie()
+                          )
+                set_student_cookie(con, schema = schema, prefix = prefix
+                                   , studentid = active_student()
+                                   , cookie = active_cookie())
             }
             
             state(2)
         } else {
             # did not find student
             log_event(con, schema, prefix, "WARNING: User not found!!", 
+                      session = session$token,
                   classroomid = active_class(), 
+                  cookie = active_cookie(),
                   other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
                   )
             showNotification(
@@ -201,6 +236,11 @@ server <- function(input, output, session) {
     
     observeEvent(input$no_modal_1, {
         #state(0)
+        log_event(
+            con = con, schema = schema, prefix = prefix, event = "Decline consent"
+            , session = session$token, classroomid = active_class(),
+            cookie = active_cookie()
+        )
         removeModal()
     })
     
@@ -209,7 +249,9 @@ server <- function(input, output, session) {
         req(state() == 2);
         
         log_event(con, schema, prefix, "Reached state: 2", 
-                  classroomid = active_class(), studentid = active_student())
+                  session = session$token,
+                  classroomid = active_class(), studentid = active_student()
+                  , cookie = active_cookie())
         
         current_student <- active_student()
         student_claim <- claim %>% filter(studentid == current_student)
@@ -219,8 +261,11 @@ server <- function(input, output, session) {
             collect()
         
         log_event(con, schema, prefix, "Found instance", 
+                  session = session$token,
                   classroomid = active_class(), studentid = active_student()
-                  , instanceid = student_instance %>% pull(instanceid) %>% .[[1]])
+                  , instanceid = student_instance %>% pull(instanceid) %>% .[[1]]
+                  , cookie = active_cookie()
+                  )
         
         student_url <- student_instance %>% pull(url) %>% .[[1]]
         student_user <- student_instance %>% pull(username) %>% .[[1]]
