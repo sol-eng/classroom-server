@@ -96,17 +96,6 @@ server <- function(input, output, session) {
                 }
             )
             
-            event_table <- reactivePoll(
-                5000,
-                session = session,
-                checkFunc = function(){
-                    message("Checking for event updates")
-                    dbGetQuery(con, glue("SELECT max(lastmodified) FROM {schema}.{prefix}event;"))
-                },
-                valueFunc = function(){
-                    event %>% collect()
-                }
-            )
         }
     
     output$admin_option <- renderUI({
@@ -361,7 +350,14 @@ server <- function(input, output, session) {
         admin_selected_class <- input$admin_class
         
         output$event_dt <- DT::renderDataTable(
-            event_table(), server = TRUE
+            event %>%
+                filter(classroomid == admin_selected_class) %>%
+                select(eventid, event, session, classroomid, instanceid, studentid) %>%
+                left_join(student %>% select(studentid, classroomid, name, email)
+                          , by = c("classroomid", "studentid")) %>%
+                collect() %>%
+                filter(refresh() >= 0)
+            , server = TRUE
         )
         
         div(
