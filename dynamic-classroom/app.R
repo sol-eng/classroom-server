@@ -414,6 +414,18 @@ server <- function(input, output, session) {
                           collect()
                   )
               }),
+              tabPanel("Unclaimed_Instances", {
+                  DT::datatable(
+                      instance %>% 
+                          select(instanceid, classroomid, identifier, url, username, password) %>%
+                          left_join(
+                              claim,
+                              by = c("classroomid", "instanceid")
+                          ) %>%
+                          filter(is.na(claimid)) %>%
+                          collect()
+                  )
+              }),
               tabPanel("Events", {
                   DT::dataTableOutput("event_dt")
               })
