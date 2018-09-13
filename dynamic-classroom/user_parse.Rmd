@@ -61,6 +61,9 @@ prep_users <- prep_users %>% filter(name != "Ellis (Analytical) <ellis.shaffer@s
      , email = glue::glue("sp{id}@spglobal.com"), other = "Dummy user"
    )
  })
+ 
+ # purge students if necessary
+ # dbGetQuery(con, "DELETE FROM classroom.v1_student returning *;")
 
 pool::poolClose(con)
 ```
