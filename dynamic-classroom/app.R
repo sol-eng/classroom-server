@@ -62,25 +62,16 @@ server <- function(input, output, session) {
         glue("{prefix}instance")
     )
     
+    event <- tbl(
+        con,
+        glue("{prefix}event")
+    )
+    
     active_class <- reactiveVal(value = NULL, label = "selected_class")
     active_student <- reactiveVal(value = NULL, label = "selected_student")
     
     active_cookie <- reactiveVal(value = NULL, label = "current_cookie")
     
-    classroom_vector <- reactivePoll(
-        5000, 
-        session = session
-        , checkFunc = function(){
-            print("Checking classroom edits")
-            dbGetQuery(
-                con, 
-                glue("SELECT max(lastmodified) FROM {schema}.{prefix}classroom;")
-            )
-        }
-        , valueFunc = function(){
-            as.list(set_names(classroom %>% pull(classroomid), classroom %>% pull(name)))
-        }
-    )
     
     
     # state model -------------------------------
@@ -90,8 +81,36 @@ server <- function(input, output, session) {
     output$admin_option <- renderUI({
         if (req(session$user %in% c("cole") || as.logical(Sys.getenv("ENABLE_ADMIN")))) {
             actionButton("to_admin_page", "To Admin Page")
-        }
-    })
+            # only define items in an admin context 
+            #(so we do not waste bandwidth on the client / server)
+            classroom_vector <- reactivePoll(
+                5000, 
+                session = session
+                , checkFunc = function(){
+                    message("Checking for classroom updates")
+                    dbGetQuery(
+                        con, 
+                        glue("SELECT max(lastmodified) FROM {schema}.{prefix}classroom;")
+                    )
+                }
+                , valueFunc = function(){
+                    as.list(set_names(classroom %>% pull(classroomid), classroom %>% pull(name)))
+                }
+            )
+            
+            event_table <- reactivePoll(
+                2000,
+                session = session,
+                checkFunc = function(){
+                    message("Checking for event updates")
+                    dbGetQuery(con, glue("SELECT max(lastmodified) FROM {schema}.{prefix}event;"))
+                    },
+                valueFunc = function(){
+                    event %>% collect()
+                }
+            )
+            }
+        })
     observeEvent(input$to_admin_page, {
         state(10);
     })
