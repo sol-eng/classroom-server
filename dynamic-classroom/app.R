@@ -1,4 +1,3 @@
-library(shiny)
 library(magrittr)
 library(shinycssloaders)
 library(dplyr)
@@ -7,6 +6,7 @@ library(glue)
 library(odbc)
 library(uuid)
 library(shinycookie)
+library(shiny)
 
 source("helper.R")
 
@@ -39,7 +39,7 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-    
+    message("Starting server")
     # useful objects ---------------------------
     
     classroom <- tbl(
@@ -74,11 +74,19 @@ server <- function(input, output, session) {
     
     refresh <- reactiveVal(value = 0, label = "force_refresh")
     
+    message("Starting state model")
     # state model -------------------------------
     
     state <- reactiveVal(0, label = "state")
-    
-        if (req(session$user %in% c("cole") || as.logical(Sys.getenv("ENABLE_ADMIN")))) {
+    safe_logical <- function(input, default = FALSE){
+        input <- as.logical(input)
+        if (is.na(input) || length(input) == 0){
+            return(default)
+        } else {
+            return(input)
+        }
+    }
+        if (req(safe_logical(session$user %in% c("cole")) || safe_logical(Sys.getenv("ENABLE_ADMIN", unset = "FALSE")))) {
             # only define items in an admin context 
             #(so we do not waste bandwidth on the client / server)
             classroom_vector <- reactivePoll(
@@ -98,8 +106,9 @@ server <- function(input, output, session) {
             
         }
     
+    message("Rendering admin option")
     output$admin_option <- renderUI({
-        if (req(session$user %in% c("cole") || as.logical(Sys.getenv("ENABLE_ADMIN")))) {
+        if (req(safe_logical(session$user %in% c("cole")) || safe_logical(Sys.getenv("ENABLE_ADMIN", unset = "FALSE")))) {
             actionButton("to_admin_page", "To Admin Page")
             }
         })
@@ -112,6 +121,7 @@ server <- function(input, output, session) {
     })
     
     
+    message("Compiling state 0")
     # state = 0 : prompt for password --------------------------
     output$page_0 <- renderUI({
         req(state() == 0);
