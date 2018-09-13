@@ -145,12 +145,8 @@
             RETURNING *
             ;"
         )
-        
         if (!dryrun) {
-            res <- callr::r_bg(function(con, query){odbc::dbGetQuery(con, query)}, 
-                               args = list(con = con, query = query),
-                               stdout = "bg_stdout.log",
-                               stderr = "bg_stderr.log")
+            res <- dbGetQuery(con, query)
             return(res)
         } else {
             return(query)
