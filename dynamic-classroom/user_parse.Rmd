@@ -55,7 +55,7 @@ prep_users <- prep_users %>% filter(name != "Ellis (Analytical) <ellis.shaffer@s
 
  # add extras
 
- map_dfr(seq_len(10), function(id){
+ map_dfr(seq_len(20), function(id){
    add_student(
      con = con, schema = schema, prefix = prefix, classroomid = 1
      , email = glue::glue("sp{id}@spglobal.com"), other = "Dummy user"
@@ -63,7 +63,7 @@ prep_users <- prep_users %>% filter(name != "Ellis (Analytical) <ellis.shaffer@s
  })
  
  # purge students if necessary
- # dbGetQuery(con, "DELETE FROM classroom.v1_student returning *;")
+ # dbGetQuery(con, "DELETE FROM classroom.v1_student WHERE classroomid = 1 returning *;")
 
 pool::poolClose(con)
 ```
