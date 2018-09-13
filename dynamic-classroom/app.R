@@ -86,7 +86,7 @@ server <- function(input, output, session) {
             return(input)
         }
     }
-        if (req(safe_logical(session$user %in% c("cole")))) {
+        if (!is.null(session$user) && session$user %in% c("cole")) {
             # only define items in an admin context 
             #(so we do not waste bandwidth on the client / server)
             classroom_vector <- reactivePoll(
@@ -108,7 +108,7 @@ server <- function(input, output, session) {
     
     message("Rendering admin option")
     output$admin_option <- renderUI({
-        if (req(safe_logical(session$user %in% c("cole")))) {
+        if (!is.null(session$user) && session$user %in% c("cole")) {
             actionButton("to_admin_page", "To Admin Page")
             }
         })
