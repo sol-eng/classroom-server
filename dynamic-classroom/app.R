@@ -261,6 +261,16 @@ server <- function(input, output, session) {
         current_student <- active_student()
         student_claim <- claim %>% filter(studentid == current_student)
         claim_id <- student_claim %>% pull(instanceid)
+        
+        if (length(claim_id) == 0) {
+            log_event(con = con, schema = schema, prefix = prefix, event = "WARNING: No server found",
+                      session = session$token, classroomid = active_class(), studentid = active_student()
+                      , cookie = active_cookie())
+        }
+        validate(need(length(claim_id) > 0, 
+                      message = "I'm sorry. No server is available at present. We will fix this as soon as we can!!",
+                      "no_server"
+                      ))
         student_instance <- instance %>% 
             filter(instanceid %in% claim_id) %>%
             collect()
