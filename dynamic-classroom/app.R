@@ -18,6 +18,11 @@ schema <- "classroom"
 
 dbExecute(con, "SET search_path=classroom;")
 
+onStop(fun = function(){
+    message("This is onStop firing at the application level")
+    pool::poolClose(con)
+    })
+
 ui <- fluidPage(
     
     # Application title
