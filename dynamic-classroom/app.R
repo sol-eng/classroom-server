@@ -185,11 +185,11 @@ server <- function(input, output, session) {
                       session = session$token,
                   classroomid = active_class(), studentid = active_student(),
                   cookie = active_cookie())
-            set_student_consent(con = con, schema = "classroom"
+            set_student_consent(con = con, schema = schema
                                 , prefix = prefix
                                 , student = active_student()
                                 , consent = "true")
-            set_student_name(con = con, schema = "classroom"
+            set_student_name(con = con, schema = schema
                              , prefix = prefix
                              , studentid = active_student()
                              , name = input$name_1)
