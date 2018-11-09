@@ -142,19 +142,22 @@ server <- function(input, output, session) {
     observeEvent(input$submit_0, {
         if (input$text_0 %in% (classroom %>% pull(password))) {
           selected_record <- classroom %>% filter(password == input$text_0)
-          if (selected_record %>% collect() %>% nrow() == 0) {
+          if (selected_record %>% tally() %>% pull(n) == 0) {
+              # this should not happen
+              warning("Strange state where password matched but did not get a record")
               state(0)
+          } else {
+              # keep just ID, so we have to look things up each time
+              # beware deletion of an ID...
+              active_class(selected_record %>% pull(classroomid))
+              
+              active_cookie(input$cookie[[glue("classroom{active_class()}")]])
+              
+              log_event(con = con, schema = schema, prefix = prefix, event = "Entering classroom"
+                        , session = session$token, classroomid = active_class()
+                        , cookie = active_cookie())
+              state(1);
           }
-          # keep just ID, so we have to look things up each time
-          # beware deletion of an ID...
-          active_class(selected_record %>% pull(classroomid))
-          
-          active_cookie(input$cookie[[glue("classroom{active_class()}")]])
-          
-          log_event(con = con, schema = schema, prefix = prefix, event = "Entering classroom"
-                    , session = session$token, classroomid = active_class()
-                    , cookie = active_cookie())
-          state(1);
         } else {
             log_event(con = con, schema = schema, prefix = prefix, event = "WARNING: Password attempt failed"
                       , session = session$token)
@@ -221,7 +224,7 @@ server <- function(input, output, session) {
         curr_student <- student %>% 
             filter(tolower(email) == input_email)
         
-        if (curr_student %>% collect() %>% nrow() > 0) {
+        if (curr_student %>% tally() %>% pull(n) > 0) {
             # found student
             
             active_student(curr_student %>% pull(studentid))
