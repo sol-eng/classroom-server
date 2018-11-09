@@ -23,6 +23,16 @@ onStop(fun = function(){
     pool::poolClose(con)
     })
 
+    classroom <- tbl(con,  glue("{prefix}classroom"))
+    
+    student <- tbl(con, glue("{prefix}student"))
+    
+    claim <- tbl(con, glue("{prefix}claim"))
+    
+    instance <- tbl(con, glue("{prefix}instance"))
+    
+    event <- tbl(con, glue("{prefix}event"))
+    
 ui <- fluidPage(
     
     # Application title
@@ -42,30 +52,6 @@ server <- function(input, output, session) {
     message("Starting server")
     # useful objects ---------------------------
     
-    classroom <- tbl(
-        con, 
-        glue("{prefix}classroom")
-        )
-    
-    student <- tbl(
-        con,
-        glue("{prefix}student")
-    )
-    
-    claim <- tbl(
-        con,
-        glue("{prefix}claim")
-    )
-    
-    instance <- tbl(
-        con,
-        glue("{prefix}instance")
-    )
-    
-    event <- tbl(
-        con,
-        glue("{prefix}event")
-    )
     
     active_class <- reactiveVal(value = NULL, label = "selected_class")
     active_student <- reactiveVal(value = NULL, label = "selected_student")
