@@ -153,9 +153,26 @@
         }
     }
     
+is_admin <- function(user) {
+  stringr::str_detect(user, "^.*@rstudio.com$")
+}
     
-#explore <- function(a, b) {
-#  query <- glue::glue("some string {a} with another string {b}")
+#reprex::reprex({
+#explore <- function(a, con) {
+#  a <- glue::single_quote(a)
+#  query <- glue::glue("SELECT {a};")
+#  print(query)
 #  
-#  callr::r_bg(function(query){print(query)}, args = list(query = query), stdout = print)
+#  proc <- callr::r_bg(
+#    func = function(query, con){print(query); DBI::dbGetQuery(con, query)}
+#    , args = list(query = query, con = con)
+#    , supervise = TRUE
+#    )
+#  return(proc)
 #}
+#
+#con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+#
+#pr <- explore("test", con)
+#pr$read_all_output()
+#})
