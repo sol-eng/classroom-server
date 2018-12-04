@@ -10,6 +10,7 @@ library(shiny)
 
 source("helper.R")
 
+
 cfg <- config::get("database", file = "config.yml")
 con <- do.call(pool::dbPool, cfg)
 
@@ -72,7 +73,7 @@ server <- function(input, output, session) {
             return(input)
         }
     }
-        if (!is.null(session$user) && session$user %in% c("cole")) {
+        if (!is.null(session$user) && is_admin(session$user)) {
             # only define items in an admin context 
             #(so we do not waste bandwidth on the client / server)
             classroom_vector <- reactivePoll(
@@ -94,7 +95,7 @@ server <- function(input, output, session) {
     
     message("Rendering admin option")
     output$admin_option <- renderUI({
-        if (!is.null(session$user) && session$user %in% c("cole")) {
+        if (!is.null(session$user) && is_admin(session$user)) {
             actionButton("to_admin_page", "To Admin Page")
             }
         })
