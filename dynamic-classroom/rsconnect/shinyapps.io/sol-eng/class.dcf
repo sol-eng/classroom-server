@@ -1,0 +1,13 @@
+name: class
+title: class
+username:
+account: sol-eng
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 603149
+bundleId: 1739951
+url: https://sol-eng.shinyapps.io/class/
+when: 1543946503.5591
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: add_instances_20180913.html|add_instances.html|add_instances_pass.html|add_instances.Rmd|attendees_v10.xlsx|bg_stderr.log|bg_stdout.log|create_table.R|file.R|myfile.csv|myfile.txt|print|profile-time.Rprofvis|profiling.Rprofvis|spglobal-final-1.csv|spglobal-final-2.csv|user_parse_20180913.html|user_parse.Rmd
