@@ -208,6 +208,7 @@ server <- function(input, output, session) {
         input_email <- input$email_1 %>% 
             stringr::str_to_lower() %>%
             stringr::str_trim()
+        # lookup of the current student by email
         curr_student <- student %>% 
             filter(tolower(email) == input_email)
         
