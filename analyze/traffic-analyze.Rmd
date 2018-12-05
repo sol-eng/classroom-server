@@ -1,6 +1,8 @@
 ---
 title: "traffic-analyze"
-output: html_document
+output: 
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -68,8 +70,11 @@ all_events %>% group_by(date = date(lastmodified)) %>% arrange(date) %>% tally()
 
 ```{r}
 analyze_events <- all_events %>%
-  filter(lastmodified <= "2018-09-14")
+  filter(date(lastmodified) <= "2018-09-14")
 
+analyze_events %>%
+  group_by(date=date(lastmodified)) %>%
+  tally()
 # session with more than one cookie
 analyze_events %>% 
   group_by(session) %>% 
@@ -91,17 +96,15 @@ cookie_too_many_users %>%
   group_by(d_student) %>%
   summarize(total=n(), which = str_flatten(as.character(cookie), collapse = ","))
 
+which_cookie_users <- cookie_too_many_users %>%
+  filter(d_student > 1) %>%
+  distinct(cookie) %>%
+  pull()
+
+which_cookie_users <- which_cookie_users[!is.na(which_cookie_users)]
 # specific examples
 analyze_events %>%
-  filter(cookie == "4431ab79-d33e-46c7-91df-32de4bec05a0") %>% 
-  select(session, event, studentid, lastmodified ,email)
-
-analyze_events %>%
-  filter(cookie == "11345ce5-143a-4f27-beda-d3bd94493d79") %>% 
-  select(session, event, studentid, lastmodified ,email)
-
-analyze_events %>%
-  filter(cookie == "e7994a4b-bdc0-4431-bf8b-936e38673cd4") %>% 
+  filter(cookie %in% which_cookie_users) %>% 
   select(session, event, studentid, lastmodified ,email)
 
 # suffice it to say that these were test cases...
@@ -127,7 +130,27 @@ which_users <- user_too_many_cookies %>%
   pull()
 
 which_users <- which_users[!is.na(which_users)]
+
+analyze_events %>%
+  filter(studentid %in% which_users) %>%
+  group_by(student, email, cookie) %>%
+  summarize(min(lastmodified), max(lastmodified)) %>%
+  arrange(email)
+
+# raw events
 analyze_events %>%
   filter(studentid %in% which_users)
 ```
 
+```{r cookie}
+
+# cookies over mulitple days
+analyze_events %>%
+  group_by(cookie) %>%
+  summarize(
+    first = sum(case_when(date(lastmodified) == "2018-09-13" ~ 1, TRUE ~ 0)),
+    second = sum(case_when(date(lastmodified) == "2018-09-14" ~ 1, TRUE ~ 0))
+    )
+  
+
+```
