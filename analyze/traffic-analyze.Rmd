@@ -154,3 +154,8 @@ analyze_events %>%
   
 
 ```
+
+The unfortunate result here is that at least a handful of users will _not_ be
+uniquely recognized by their cookie... While the cookie is helpful to tracking
+them, it is not fool-proof. As a result, we _do_ need to ask for some type of
+identifying information...
