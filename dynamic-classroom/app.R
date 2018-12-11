@@ -774,15 +774,15 @@ server <- function(input, output, session) {
                 list(
                     claim %>% 
                         filter(classroomid == admin_selected_class) %>% 
-                        summarize(out=max(claimid)) %>% 
+                        summarize(out=max(claimid, na.rm = TRUE)) %>% 
                         pull(out),
                     student %>%
                         filter(classroomid == admin_selected_class) %>%
-                        summarize(out=max(studentid)) %>%
+                        summarize(out=max(studentid, na.rm = TRUE)) %>%
                         pull(out),
                     instance %>%
                         filter(classroomid == admin_selected_class) %>%
-                        summarize(out=max(instanceid)) %>%
+                        summarize(out=max(instanceid, na.rm = TRUE)) %>%
                         pull(out)
                 )
             },
