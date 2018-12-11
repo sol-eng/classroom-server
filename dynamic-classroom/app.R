@@ -319,7 +319,9 @@ server <- function(input, output, session) {
             state(2)
         } else if ( 
             !input$here_before_1 || 
-            curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) == 0 
+            (curr_student %>% tally() %>% pull(n) > 0 &&
+             curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) == 0 
+             )
             ) {
             # did not find student/instance, new student
             class_status <- classroom %>% filter(classroomid == classid) %>% pull(status)
