@@ -109,7 +109,7 @@
         }
     }
     add_claim <- function(con, schema, prefix,
-                          classroomid, instanceid = NULL, studentid
+                          classroomid, studentid, instanceid = NULL
                           , dryrun = FALSE) {
       # do the claim in a single transaction to protect against
       # potential issues with concurrency
