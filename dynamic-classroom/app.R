@@ -264,8 +264,9 @@ server <- function(input, output, session) {
             stringr::str_to_lower() %>%
             stringr::str_trim()
         # lookup of the current student by email
+        classid <- as.integer(active_class())
         curr_student <- student %>% 
-            filter(tolower(email) == input_email)
+            filter(classroomid == classid, tolower(email) == input_email)
         
         if (curr_student %>% tally() %>% pull(n) > 0) {
             # found student
