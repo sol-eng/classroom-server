@@ -169,6 +169,18 @@ server <- function(input, output, session) {
         class_name <- classroom_record %>% pull(name)
         class_desc <- classroom_record %>% pull(description)
         
+        if (!is.null(active_cookie())) {
+            showModal(
+                modalDialog(
+                    div(
+                        p("We noticed that you have been here before. Would you like to proceed automatically?")
+                    )
+                    , title = "Skip this step"
+                    , footer = div(actionButton("no_skip_1", "No"), actionButton("yes_skip_1", "Yes"))
+                )
+            )
+        }
+        
         div(
             h2(glue::glue("{class_name}")),
             div(class_desc %>% protect_empty(NULL)),
@@ -178,6 +190,32 @@ server <- function(input, output, session) {
             actionButton("submit_1", "Submit")
         )
         
+    })
+    
+    observeEvent(input$no_skip_1, {
+        removeModal()
+    })
+    observeEvent(input$yes_skip_1, {
+        removeModal()
+        
+        # get student from cookie
+        classid <-  as.integer(active_class())
+        user_cookie <- active_cookie()
+        curr_student <- student %>%
+            filter(classroomid == classid, cookie == user_cookie)
+        
+        
+        if (curr_student %>% tally() %>% pull(n) > 0) {
+            # found student
+            log_event(con, schema, prefix, event = "Found student based on cookie", 
+                      session = session$token,
+                  classroomid = active_class(), studentid = active_student(),
+                  cookie = active_cookie())
+            active_student(curr_student %>% pull(studentid) %>% .[[1]])
+            state(2)
+        } else {
+            # student not found
+        }
     })
     
     observeEvent(input$submit_1, {
