@@ -215,6 +215,16 @@ server <- function(input, output, session) {
             state(2)
         } else {
             # student not found
+            log_event(con, schema, prefix, event = "WARNING: Could not find student based on cookie", 
+                      session = session$token,
+                  classroomid = active_class(), studentid = active_student(),
+                  cookie = active_cookie())
+            
+            showNotification(
+                "Sorry, we could not find your instance based on the cookie.
+                Please enter your identifying information"
+                , type = "error"
+            )
         }
     })
     
