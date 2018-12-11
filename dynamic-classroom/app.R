@@ -537,13 +537,17 @@ server <- function(input, output, session) {
                   
                   fileInput("new_instance_file", label = "Upload File", multiple = FALSE),
                   checkboxInput("new_instance_heading", label = "Heading?", value = FALSE),
+                  uiOutput("new_instance_select_colnames"),
                   DT::dataTableOutput("display_new_instance_data")
               )
-              , title = "New classroom"
-              , footer = div(actionButton("create_class_cancel", "Cancel"), actionButton("create_class_submit", "Submit"))
+              , title = "Upload instance data"
+              , footer = div(actionButton("new_instance_cancel", "Cancel"), actionButton("new_instance_submit", "Submit"))
+              , size = "l"
           )
       )
     })
+    observeEvent(input$new_instance_cancel, {removeModal()})
+    observeEvent(input$new_instance_submit, {removeModal()})
     new_instance_file <- reactive({
         message("Executing new_instance_file reactive")
         
@@ -558,8 +562,48 @@ server <- function(input, output, session) {
         
         return(raw_data)
     })
+    new_instance_colnames <- reactive({
+        c("Choose a column" = "", colnames(new_instance_data()))
+    })
+    output$new_instance_select_colnames <- renderUI({
+      req(new_instance_colnames())  
+        div(
+            column(
+                6,
+                selectizeInput("new_instance_identifier", label = "Identifier", choices = new_instance_colnames(), multiple = FALSE),
+                selectizeInput("new_instance_url", label = "Url", choices = new_instance_colnames(), multiple = FALSE)
+            ),
+            column(
+                6,
+                selectizeInput("new_instance_username", label = "Username", choices = new_instance_colnames(), multiple = FALSE),
+                selectizeInput("new_instance_password", label = "Password", choices = new_instance_colnames(), multiple = FALSE)
+            )
+        )
+    })
+    safe_name <- function(name){
+        if (is.null(name) || nchar(name) == 0) {
+            return(NULL)
+        } else if (is.name(name)){
+            return(name)
+        } else {
+            return(as.name(name))
+        }
+    }
+    prep_instance_data <- reactive({
+        sel_list <- c(
+            identifier = safe_name(input$new_instance_identifier), 
+            url = safe_name(input$new_instance_url),
+            username = safe_name(input$new_instance_username),
+            password = safe_name(input$new_instance_password)
+            )
+        new_instance_data() %>%
+            mutate(
+                !!!sel_list
+                ) %>%
+            select(!!!names(sel_list))
+    })
     output$display_new_instance_data <- DT::renderDataTable({
-        DT::datatable(new_instance_data())
+        DT::datatable(prep_instance_data())
     })
     observeEvent(input$create_class, {
       showModal(
