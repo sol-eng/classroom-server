@@ -268,8 +268,10 @@ server <- function(input, output, session) {
         curr_student <- student %>% 
             filter(classroomid == classid, tolower(email) == input_email)
         
-        if (curr_student %>% tally() %>% pull(n) > 0) {
-            # found student
+        if (curr_student %>% tally() %>% pull(n) > 0 && 
+            curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) > 0
+            ) {
+            # found student and claim
             
             active_student(curr_student %>% pull(studentid))
         
@@ -315,8 +317,11 @@ server <- function(input, output, session) {
             }
             
             state(2)
-        } else if ( !input$here_before_1 ) {
-            # did not find student, new student
+        } else if ( 
+            !input$here_before_1 || 
+            curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) == 0 
+            ) {
+            # did not find student/instance, new student
             class_status <- classroom %>% filter(classroomid == classid) %>% pull(status)
             if (class_status != "ACTIVE") {
                 # new students not welcome...
@@ -342,12 +347,26 @@ server <- function(input, output, session) {
                     cookie = active_cookie(),
                     other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
                   )
-                # add student record
-                new_student <- add_student(
-                    con = con, schema = schema, prefix = prefix, classroomid = classid,
-                    email = input$email_1, name = input$name_1
-                )
-                active_student(new_student %>% pull(studentid))
+                if (curr_student %>% tally() %>% pull(n) == 0) {
+                  # add student record
+                  new_student <- add_student(
+                      con = con, schema = schema, prefix = prefix, classroomid = classid,
+                      email = input$email_1, name = input$name_1
+                  )
+                  active_student(new_student %>% pull(studentid))
+                } else {
+                  # existing student  
+                  active_student(curr_student %>% pull(studentid))
+              
+                  log_event(con, schema, prefix, event = "Found student", 
+                            session = session$token,
+                        classroomid = active_class(), studentid = active_student(),
+                        cookie = active_cookie())
+                  set_student_name(con = con, schema = schema
+                                   , prefix = prefix
+                                   , studentid = active_student()
+                                   , name = input$name_1)
+                }
                 set_student_consent(con = con, schema = schema
                                     , prefix = prefix
                                     , student = active_student()
