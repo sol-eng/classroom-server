@@ -317,7 +317,7 @@ server <- function(input, output, session) {
             state(2)
         } else if ( !input$here_before_1 ) {
             # did not find student, new student
-            class_state <- classroom %>% filter(classroomid == classid) %>% pull(status)
+            class_status <- classroom %>% filter(classroomid == classid) %>% pull(status)
             if (class_status != "ACTIVE") {
                 # new students not welcome...
                 log_event(
