@@ -627,12 +627,12 @@ server <- function(input, output, session) {
               tabPanel("Unclaimed_Instances", {
                   DT::datatable(
                       instance %>% 
+                          filter(classroomid == admin_selected_class) %>%
                           select(instanceid, classroomid, identifier, url, username, password) %>%
-                          left_join(
+                          anti_join(
                               claim,
                               by = c("classroomid", "instanceid")
                           ) %>%
-                          filter(is.na(claimid)) %>%
                           collect()
                   )
               }),
