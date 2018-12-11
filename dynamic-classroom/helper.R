@@ -109,8 +109,34 @@
         }
     }
     add_claim <- function(con, schema, prefix,
-                          classroomid, instanceid, studentid
+                          classroomid, instanceid = NULL, studentid
                           , dryrun = FALSE) {
+      # do the claim in a single transaction to protect against
+      # potential issues with concurrency
+      
+      if (is.null(instanceid)) {
+        # get instanceid from available instances
+        query <- glue::glue(
+          "WITH new_instance AS (
+            SELECT instanceid
+            FROM {schema}.{prefix}instance
+            WHERE instanceid NOT IN (
+              SELECT instanceid
+              FROM {schema}.{prefix}claim
+              WHERE classroomid = {classroomid}
+            )
+            AND classroomid = {classroomid}
+            LIMIT 1
+          )
+          INSERT INTO {schema}.{prefix}claim
+          (classroomid, instanceid, studentid)
+          SELECT {classroomid}, instanceid, {studentid}
+          FROM new_instance
+          RETURNING *
+          ;"
+        )
+      } else {
+        # take the provided instanceid
         query <- glue::glue(
             "INSERT INTO {schema}.{prefix}claim
             (classroomid, instanceid, studentid)
@@ -118,6 +144,7 @@
             RETURNING *
             ;"
             )
+      }
         if (!dryrun) {
             res <- dbGetQuery(con, query)
             return(res)
