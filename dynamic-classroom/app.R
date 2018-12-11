@@ -286,6 +286,7 @@ server <- function(input, output, session) {
                              , studentid = active_student()
                              , name = input$name_1)
             
+            # set cookie
             if (is.null(input$cookie[[glue("classroom{active_class()}")]])) {
                 active_cookie(UUIDgenerate())
                 updateCookie(session,
@@ -314,8 +315,34 @@ server <- function(input, output, session) {
             }
             
             state(2)
+        } else if ( !input$here_before_1 ) {
+            # did not find student, new student
+            class_state <- classroom %>% filter(classroomid == classid) %>% pull(status)
+            if (class_status != "ACTIVE") {
+                log_event(
+                    con, schema, prefix, 
+                    glue::glue("WARNING: Tried to claim new instance with classroom state: {class_status}"), 
+                    session=session$token, 
+                    classroomid = active_class(), 
+                    cookie = active_cookie(),
+                    other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
+                  )
+                showNotification(
+                    "Sorry, new instances are not available at this time. Please contact your TA",
+                    type = "error"
+                )
+            } else {
+                log_event(
+                    con, schema, prefix, 
+                    "Claim new instance", 
+                    session=session$token, 
+                    classroomid = active_class(), 
+                    cookie = active_cookie(),
+                    other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
+                  )
+            }
         } else {
-            # did not find student
+            # did not find student, and is returning
             log_event(con, schema, prefix, "WARNING: User not found!!", 
                       session = session$token,
                   classroomid = active_class(), 
@@ -323,8 +350,9 @@ server <- function(input, output, session) {
                   other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
                   )
             showNotification(
-                "Your email was not found in the classroom. 
-                Please double check spelling and try again"
+                "Sorry, your email was not found in the classroom. 
+                Please double check spelling and try again. Otherwise,
+                you can contact a TA for assistance."
                 , type = "error"
             )
         }
