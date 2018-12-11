@@ -352,6 +352,35 @@ server <- function(input, output, session) {
                                     , prefix = prefix
                                     , student = active_student()
                                     , consent = "true")
+                
+                # set cookie
+                if (is.null(input$cookie[[glue("classroom{active_class()}")]])) {
+                    active_cookie(UUIDgenerate())
+                    updateCookie(session,
+                             !!!as.list(set_names(active_cookie(), glue("classroom{active_class()}")))
+                             )
+                    set_student_cookie(con, schema = schema, prefix = prefix
+                                       , studentid = active_student()
+                                       , cookie = active_cookie())
+                    log_event(con = con, schema = schema, prefix = prefix, event = "Set cookie"
+                              , session = session$token
+                              , classroomid = active_class()
+                              , studentid = active_student()
+                              , cookie = active_cookie()
+                              )
+                } else {
+                    active_cookie(input$cookie[[glue("classroom{active_class()}")]])
+                    log_event(con = con, schema = schema, prefix = prefix, event = "Cookie already exists"
+                              , session = session$token
+                              , classroomid = active_class()
+                              , studentid = active_student()
+                              , cookie = active_cookie()
+                              )
+                    set_student_cookie(con, schema = schema, prefix = prefix
+                                       , studentid = active_student()
+                                       , cookie = active_cookie())
+                }
+            
                 # claim available instance
                 claim_instance <- add_claim(
                     con = con, 
