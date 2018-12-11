@@ -680,24 +680,80 @@ server <- function(input, output, session) {
                 filter(refresh() >= 0)
             , server = TRUE
         )
+        admin_student_data <- reactivePoll(
+                intervalMillis = 10000,
+                session = session,
+                checkFunc = function(){
+                    student %>% 
+                        filter(classroomid == admin_selected_class) %>% 
+                        tally() %>% pull(n)
+                    },
+                valueFunc = function(){
+                    req(admin_selected_class)
+                  student %>% 
+                    filter(classroomid == admin_selected_class) %>%
+                    select(studentid, classroomid, name, email, consent, cookie) %>% 
+                    collect()
+                }
+            )
+        output$admin_student_dt <- DT::renderDataTable(
+            admin_student_data() %>% DT::datatable()
+            )
         
+        admin_instance_data <- reactivePoll(
+            intervalMillis = 10000,
+            session = session,
+            checkFunc = function(){
+                instance %>% 
+                    filter(classroomid == admin_selected_class) %>% 
+                    tally() %>% pull(n)
+                },
+            valueFunc = function() {
+                req(admin_selected_class)
+                instance %>%
+                    filter(classroomid == admin_selected_class) %>%
+                    select(instanceid, classroomid, identifier, url, username, password) %>%
+                    collect()
+            }
+        )
+        output$admin_instance_dt <- DT::renderDataTable({
+            admin_instance_data() %>% DT::datatable()
+        })
+        
+        admin_unclaimed_instance_data <- reactivePoll(
+            intervalMillis = 10000,
+            session = session,
+            checkFunc = function(){
+                instance %>%
+                    filter(classroomid == admin_selected_class) %>% 
+                    anti_join(
+                        claim, 
+                        by = c("classroomid", "instanceid")
+                    ) %>%
+                    tally() %>% pull(n)
+                },
+            valueFunc = function() {
+                req(admin_selected_class)
+                instance %>%
+                    filter(classroomid == admin_selected_class) %>%
+                    select(instanceid, classroomid, identifier, url, username, password) %>%
+                    anti_join(
+                        claim,
+                        by = c("classroomid", "instanceid")
+                    ) %>%
+                    collect()
+            }
+        )
+        output$admin_unclaimed_instance_dt <- DT::renderDataTable({
+            admin_unclaimed_instance_data() %>% DT::datatable()
+        })
         div(
           tabsetPanel(
               tabPanel("Student", {
-                  DT::datatable(
-                      student %>% 
-                          filter(classroomid == admin_selected_class) %>%
-                          select(studentid, classroomid, name, email, consent, cookie) %>% 
-                          collect()
-                  )
+                  DT::dataTableOutput("admin_student_dt")
               }),
               tabPanel("Instance", {
-                  DT::datatable(
-                      instance %>%
-                          filter(classroomid == admin_selected_class) %>%
-                          select(instanceid, classroomid, identifier, url, username, password) %>%
-                          collect()
-                  )
+                  DT::dataTableOutput("admin_instance_dt")
               }),
               tabPanel("Claim", {
                   DT::datatable(
@@ -722,16 +778,7 @@ server <- function(input, output, session) {
                   )
               }),
               tabPanel("Unclaimed_Instances", {
-                  DT::datatable(
-                      instance %>% 
-                          filter(classroomid == admin_selected_class) %>%
-                          select(instanceid, classroomid, identifier, url, username, password) %>%
-                          anti_join(
-                              claim,
-                              by = c("classroomid", "instanceid")
-                          ) %>%
-                          collect()
-                  )
+                  DT::dataTableOutput("admin_unclaimed_instance_dt")
               }),
               tabPanel("Events", {
                   DT::dataTableOutput("event_dt")
