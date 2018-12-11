@@ -352,12 +352,38 @@ server <- function(input, output, session) {
                                     , prefix = prefix
                                     , student = active_student()
                                     , consent = "true")
-                # get unclaimed instances
                 # claim available instance
-                #add_claim()
+                claim_instance <- add_claim(
+                    con = con, 
+                    schema = schema, 
+                    prefix = prefix, 
+                    classroomid = active_class(), 
+                    studentid = active_student()
+                    )
+                if (claim_instance %>% tally() %>% pull(n) == 1) {
+                    # successful claim
+                    log_event(con, schema, prefix, event = "Successful instance claim", 
+                              session = session$token,
+                          classroomid = active_class(), studentid = active_student(), 
+                          instanceid = claim_instance %>% pull(instanceid),
+                          cookie = active_cookie())
+                    
+                    state(2)
+                } else {
+                    # unsuccessful claim
+                    log_event(con, schema, prefix, event = "WARNING: Failed to claim instance", 
+                              session = session$token,
+                          classroomid = active_class(), studentid = active_student(),
+                          cookie = active_cookie())
+                    
+                    showNotification(
+                        "Sorry, an instance is not available at this time. Please contact your TA.",
+                        type = "error"
+                    )
+                }
             }
         } else {
-            # did not find student, and is returning
+            # did not find student, and is a returning user
             log_event(con, schema, prefix, "WARNING: User not found!!", 
                       session = session$token,
                   classroomid = active_class(), 
