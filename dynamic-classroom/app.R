@@ -7,6 +7,7 @@ library(odbc)
 library(uuid)
 library(shinycookie)
 library(shiny)
+library(shinyWidgets)
 
 source("helper.R")
 
@@ -184,6 +185,10 @@ server <- function(input, output, session) {
         div(
             h2(glue::glue("{class_name}")),
             div(class_desc %>% protect_empty(NULL)),
+            p("Are you trying to get back to an existing instance?"),
+            materialSwitch(inputId = "here_before_1", 
+                           label = textOutput("here_before_1_label"), 
+                           status = "success"),
             p("Please enter your name and email address"),
             textInput("name_1", "Name: "),
             textInput("email_1", "Email: "),
@@ -191,6 +196,8 @@ server <- function(input, output, session) {
         )
         
     })
+    
+    output$here_before_1_label <- renderText(ifelse(input$here_before_1, "Yes, existing", "No, I need a new instance"))
     
     observeEvent(input$no_skip_1, {
         removeModal()
