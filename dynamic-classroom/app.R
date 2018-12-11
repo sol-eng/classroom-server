@@ -319,6 +319,7 @@ server <- function(input, output, session) {
             # did not find student, new student
             class_state <- classroom %>% filter(classroomid == classid) %>% pull(status)
             if (class_status != "ACTIVE") {
+                # new students not welcome...
                 log_event(
                     con, schema, prefix, 
                     glue::glue("WARNING: Tried to claim new instance with classroom state: {class_status}"), 
@@ -332,14 +333,28 @@ server <- function(input, output, session) {
                     type = "error"
                 )
             } else {
+                # welcome, new student!
                 log_event(
                     con, schema, prefix, 
-                    "Claim new instance", 
+                    "Add student and Claim instance", 
                     session=session$token, 
                     classroomid = active_class(), 
                     cookie = active_cookie(),
                     other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
                   )
+                # add student record
+                new_student <- add_student(
+                    con = con, schema = schema, prefix = prefix, classroomid = classid,
+                    email = input$email_1, name = input$name_1
+                )
+                active_student(new_student %>% pull(studentid))
+                set_student_consent(con = con, schema = schema
+                                    , prefix = prefix
+                                    , student = active_student()
+                                    , consent = "true")
+                # get unclaimed instances
+                # claim available instance
+                #add_claim()
             }
         } else {
             # did not find student, and is returning
