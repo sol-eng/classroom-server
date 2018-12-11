@@ -510,13 +510,57 @@ server <- function(input, output, session) {
     output$page_10 <- renderUI({
         req(state() == 10);
         
-        div(
-            h3("Admin page!"),
-            actionButton("admin_back_to_app", "Back to App"),
-            actionButton("force_refresh", "Refresh Events"),
-            checkboxInput("show_null_events", "Show Pre-Classroom Events", value = FALSE),
-            selectizeInput("admin_class", "Select Class", choices = classroom_vector())
+        fluidPage(
+          column(6,
+              h3("Admin page!"),
+              actionButton("admin_back_to_app", "Back to App"),
+              actionButton("force_refresh", "Refresh Events"),
+              checkboxInput("show_null_events", "Show Pre-Classroom Events", value = FALSE),
+              selectizeInput("admin_class", "Select Class", choices = classroom_vector())
+          ),
+          column(
+              6, 
+              actionButton("create_class", "Create New Classroom"),
+              actionButton("upload_instances", "Upload Instances")
+          )
         )
+    })
+    
+    observeEvent(input$create_class, {
+      showModal(
+          modalDialog(
+              div(
+                  p("Enter classroom information"),
+                  textInput("new_class_name", "Name"),
+                  textInput("new_class_password", "Class Password"),
+                  textAreaInput("new_class_desc", "Description")
+              )
+              , title = "New classroom"
+              , footer = div(actionButton("create_class_cancel", "Cancel"), actionButton("create_class_submit", "Submit"))
+          )
+      )
+    })
+    observeEvent(input$create_class_cancel, {removeModal()})
+    observeEvent(input$create_class_submit, {
+        new_class <- add_classroom(
+            con = con, schema = schema, prefix = prefix,
+                name = input$new_class_name,
+                password = input$new_class_password,
+                status = "ACTIVE",
+                description = input$new_class_description
+            )
+        if (nrow(new_class) > 0) {
+            showNotification(
+                glue::glue("Successfully created classroom: {new_class$classroomid}"),
+                type = "message"
+            )
+        } else {
+            showNotification(
+                "Something went wrong creating the classroom...",
+                type = "warning"
+            )
+        }
+        removeModal()
     })
     
     observeEvent(input$force_refresh, {
