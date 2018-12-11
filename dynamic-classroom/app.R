@@ -547,7 +547,22 @@ server <- function(input, output, session) {
       )
     })
     observeEvent(input$new_instance_cancel, {removeModal()})
-    observeEvent(input$new_instance_submit, {removeModal()})
+    observeEvent(input$new_instance_submit, {
+        removeModal()
+        showNotification(
+            "Submitting instance data to the database", type = "message"
+        )
+        dbWriteTable(
+            conn = con,
+            name = Id(schema = schema, table = glue::glue("{prefix}instance")),
+            value = prep_instance_data(),
+            overwrite = FALSE,
+            append = TRUE
+        )
+        showNotification(
+            "Finished submitting instance data to the database", type = "message"
+        )
+        })
     new_instance_file <- reactive({
         message("Executing new_instance_file reactive")
         
@@ -598,9 +613,10 @@ server <- function(input, output, session) {
             )
         new_instance_data() %>%
             mutate(
-                !!!sel_list
+                !!!sel_list,
+                classroomid = input$admin_class
                 ) %>%
-            select(!!!names(sel_list))
+            select(!!!names(sel_list), classroomid)
     })
     output$display_new_instance_data <- DT::renderDataTable({
         DT::datatable(prep_instance_data())
