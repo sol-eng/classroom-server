@@ -526,6 +526,41 @@ server <- function(input, output, session) {
         )
     })
     
+    output$admin_selected_class <- renderText(classroom %>% 
+        filter(classroomid == input$admin_class) %>%
+        pull(name))
+    observeEvent(input$upload_instances, {
+      showModal(
+          modalDialog(
+              div(
+                  p("Upload instances for: ", textOutput("admin_selected_class")),
+                  
+                  fileInput("new_instance_file", label = "Upload File", multiple = FALSE),
+                  checkboxInput("new_instance_heading", label = "Heading?", value = FALSE),
+                  DT::dataTableOutput("display_new_instance_data")
+              )
+              , title = "New classroom"
+              , footer = div(actionButton("create_class_cancel", "Cancel"), actionButton("create_class_submit", "Submit"))
+          )
+      )
+    })
+    new_instance_file <- reactive({
+        message("Executing new_instance_file reactive")
+        
+        validate(need(input$new_instance_file, message = FALSE))
+        input$new_instance_file
+    })
+    new_instance_data <- reactive({
+        raw_data <- readr::read_csv(
+            new_instance_file()$datapath, 
+            col_names = input$new_instance_heading
+        )
+        
+        return(raw_data)
+    })
+    output$display_new_instance_data <- DT::renderDataTable({
+        DT::datatable(new_instance_data())
+    })
     observeEvent(input$create_class, {
       showModal(
           modalDialog(
