@@ -181,7 +181,7 @@
     }
     
 is_admin <- function(user) {
-  !is.null(user) && stringr::str_detect(user, "^.*@rstudio.com$")
+  !is.null(user) && (stringr::str_detect(user, "^.*@rstudio.com$") || user == "cole")
 }
     
 #reprex::reprex({
