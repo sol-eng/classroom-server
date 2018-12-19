@@ -36,8 +36,8 @@ create_table_instance <- function(schema, prefix){
     "CREATE TABLE {schema}.{prefix}instance (
     instanceid serial PRIMARY KEY NOT NULL,
     classroomid integer NOT NULL REFERENCES {schema}.{prefix}classroom (classroomid),
-    identifier text NOT NULL,
-    url text NOT NULL,
+    identifier text NOT NULL UNIQUE,
+    url text NOT NULL UNIQUE,
     username text NOT NULL,
     password text NOT NULL
     );"
