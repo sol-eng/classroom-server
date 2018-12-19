@@ -22,10 +22,11 @@ create_table_student <- function(schema, prefix){
     studentid serial PRIMARY KEY NOT NULL,
     classroomid integer NOT NULL REFERENCES {schema}.{prefix}classroom (classroomid),
     name text,
-    email text NOT NULL UNIQUE,
+    email text NOT NULL,
     consent boolean NOT NULL DEFAULT false,
     cookie text,
-    other text
+    other text,
+    UNIQUE(classroomid, email)
     );"
   )
 }
