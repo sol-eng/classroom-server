@@ -167,7 +167,7 @@ add_archive_trigger <- function(schema, prefix, table){
 }
 
 
-create_all <- function(schema, prefix) {
+create_all <- function(con, schema, prefix) {
   dbExecute(con,create_schema(schema));
   
   dbExecute(con,create_table_classroom(schema, prefix));
