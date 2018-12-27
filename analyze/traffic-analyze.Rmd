@@ -1,0 +1,161 @@
+---
+title: "traffic-analyze"
+output: 
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(DBI)
+library(glue)
+library(dplyr)
+library(dbplyr)
+
+source("../dynamic-classroom/helper.R")
+
+cfg <- config::get("database", file = "config.yml")
+con <- do.call(pool::dbPool, cfg)
+
+prefix <- "v1_"
+schema <- "classroom"
+
+dbExecute(con, glue("SET search_path={schema};"))
+
+```
+
+```{r tbls}
+    classroom <- tbl(
+        con, 
+        glue("{prefix}classroom")
+        )
+    
+    student <- tbl(
+        con,
+        glue("{prefix}student")
+    )
+    
+    claim <- tbl(
+        con,
+        glue("{prefix}claim")
+    )
+    
+    instance <- tbl(
+        con,
+        glue("{prefix}instance")
+    )
+    
+    event <- tbl(
+        con,
+        glue("{prefix}event")
+    )
+```
+
+
+```{r exploration}
+all_events <- event %>% left_join(
+  classroom %>% select(classroomid, classroom = name), by = c("classroomid")
+) %>%
+  left_join(
+    student %>% 
+      select(studentid, classroomid, student = name, 
+             email, consent, student_cookie=cookie),
+    by = c("classroomid", "studentid")
+  )
+
+# break out by dates
+all_events %>% group_by(date = date(lastmodified)) %>% arrange(date) %>% tally()
+```
+
+```{r}
+analyze_events <- all_events %>%
+  filter(date(lastmodified) <= "2018-09-14")
+
+analyze_events %>%
+  group_by(date=date(lastmodified)) %>%
+  tally()
+# session with more than one cookie
+analyze_events %>% 
+  group_by(session) %>% 
+  summarize(count=n(), d_cookie=n_distinct(cookie)) %>%
+  ungroup() %>% group_by(d_cookie) %>%
+  summarize(n_session = n())
+
+# cookie with more than one user
+cookie_too_many_users <- analyze_events %>%
+  group_by(cookie) %>%
+  summarize(
+    count=n(), 
+    d_student = n_distinct(studentid),
+    d_session = n_distinct(session),
+    student = str_flatten(as.character(studentid), collapse = ",")
+    )
+cookie_too_many_users
+cookie_too_many_users %>%
+  group_by(d_student) %>%
+  summarize(total=n(), which = str_flatten(as.character(cookie), collapse = ","))
+
+which_cookie_users <- cookie_too_many_users %>%
+  filter(d_student > 1) %>%
+  distinct(cookie) %>%
+  pull()
+
+which_cookie_users <- which_cookie_users[!is.na(which_cookie_users)]
+# specific examples
+analyze_events %>%
+  filter(cookie %in% which_cookie_users) %>% 
+  select(session, event, studentid, lastmodified ,email)
+
+# suffice it to say that these were test cases...
+```
+
+```{r user_cookies}
+user_too_many_cookies <- analyze_events %>%
+  group_by(studentid) %>%
+  summarize(
+    count=n(),
+    d_cookie = n_distinct(cookie)
+  )  %>%
+  ungroup()
+
+user_too_many_cookies %>%
+  group_by(d_cookie) %>%
+  tally()
+
+
+which_users <- user_too_many_cookies %>% 
+  filter(d_cookie > 1) %>%
+  distinct(studentid) %>%
+  pull()
+
+which_users <- which_users[!is.na(which_users)]
+
+analyze_events %>%
+  filter(studentid %in% which_users) %>%
+  group_by(student, email, cookie) %>%
+  summarize(min(lastmodified), max(lastmodified)) %>%
+  arrange(email)
+
+# raw events
+analyze_events %>%
+  filter(studentid %in% which_users)
+```
+
+```{r cookie}
+
+# cookies over mulitple days
+analyze_events %>%
+  group_by(cookie) %>%
+  summarize(
+    first = sum(case_when(date(lastmodified) == "2018-09-13" ~ 1, TRUE ~ 0)),
+    second = sum(case_when(date(lastmodified) == "2018-09-14" ~ 1, TRUE ~ 0))
+    )
+  
+
+```
+
+The unfortunate result here is that at least a handful of users will _not_ be
+uniquely recognized by their cookie... While the cookie is helpful to tracking
+them, it is not fool-proof. As a result, we _do_ need to ask for some type of
+identifying information...

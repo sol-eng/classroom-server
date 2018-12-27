@@ -1,0 +1,69 @@
+---
+title: "user_parse"
+output: 
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("helper.R")
+
+library(DBI)
+library(odbc)
+cfg <- config::get("database", file = "config.yml")
+con <- do.call(pool::dbPool, cfg)
+schema <- "classroom"
+prefix <- "v1_"
+# add_classroom(con, schema = schema, prefix = prefix, "SPGlobal Workshop", "spglobal", "ACTIVE")
+
+library(tidyverse)
+library(readxl)
+```
+
+```{r getting_started}
+raw_users <- readxl::read_xlsx(
+  "./attendees_v10.xlsx", 
+  sheet = "Sheet1",  
+  col_names = c("name","remote", "team"), 
+  range = "A2:C100")
+
+raw_users <- raw_users %>% filter(!is.na(name))
+
+prep_users <- raw_users %>%
+  mutate(email = str_match(name, "\\<(.+)\\>")[,2]) %>%
+  mutate(email = email %>% str_trim() %>% str_to_lower())
+
+prep_users
+```
+
+# find duplicates
+
+```{r find_dups}
+prep_users %>% group_by(email) %>% tally() %>% filter(n > 1) %>% left_join(prep_users, by = "email")
+
+prep_users <- prep_users %>% filter(name != "Ellis (Analytical) <ellis.shaffer@spglobal.com>;")
+```
+
+```{r creating_students}
+  pmap_dfr(prep_users %>% select(name, remote, email), function(name, remote, email){
+    add_student(
+      con = con, schema = schema, prefix = prefix, classroomid = 1
+      , email = email, other = glue::glue("Full text: {name}||Remote?: {remote}")
+    )
+  })
+
+ # add extras
+
+ map_dfr(seq_len(20), function(id){
+   add_student(
+     con = con, schema = schema, prefix = prefix, classroomid = 1
+     , email = glue::glue("sp{id}@spglobal.com"), other = "Dummy user"
+   )
+ })
+ 
+ # purge students if necessary
+ # dbGetQuery(con, "DELETE FROM classroom.v1_student WHERE classroomid = 1 returning *;")
+
+pool::poolClose(con)
+```
