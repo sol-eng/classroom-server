@@ -200,7 +200,7 @@ server <- function(input, output, session) {
         
     })
     
-    output$here_before_1_label <- renderText(ifelse(input$here_before_1, "Yes, existing", "No, this is my first time"))
+    output$here_before_1_label <- renderText(ifelse(input$here_before_1, "Yes, trying to find my instance", "No, this is my first time"))
     
     observeEvent(input$no_skip_1, {
         removeModal()
