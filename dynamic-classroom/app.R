@@ -186,7 +186,8 @@ server <- function(input, output, session) {
         
         div(
             h2(glue::glue("{class_name}")),
-            div(class_desc %>% protect_empty(NULL)),
+            div(class_desc %>% protect_empty(NULL) %>% HTML()),
+            br(),
             p("Are you trying to get back to an existing instance?"),
             materialSwitch(inputId = "here_before_1", 
                            label = textOutput("here_before_1_label"), 
