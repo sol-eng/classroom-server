@@ -25,7 +25,7 @@ onStop(fun = function(){
     pool::poolClose(con)
     })
 
-    classroom <- tbl(con,  glue("{prefix}classroom"))
+    classroom <- tbl(con,  glue("{prefix}classroom")) %>% filter(status != 'CLOSED')
     
     student <- tbl(con, glue("{prefix}student"))
     
