@@ -631,7 +631,7 @@ server <- function(input, output, session) {
                   p("Enter classroom information"),
                   textInput("new_class_name", "Name"),
                   textInput("new_class_password", "Class Password"),
-                  textAreaInput("new_class_desc", "Description")
+                  textAreaInput("new_class_description", "Description")
               )
               , title = "New classroom"
               , footer = div(actionButton("create_class_cancel", "Cancel"), actionButton("create_class_submit", "Submit"))
