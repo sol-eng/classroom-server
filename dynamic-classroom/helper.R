@@ -181,7 +181,16 @@
     }
     
 is_admin <- function(user) {
-  !is.null(user) && (stringr::str_detect(user, "^.*@rstudio.com$") || user == "cole")
+  !is.null(user) && 
+    (
+      stringr::str_detect(user, "^.*@rstudio.com$") || 
+        user == "cole" ||
+        user %in% (
+          Sys.getenv("CLASS_ADMIN_USER") %>%
+            strsplit(split = "\\|") %>%
+            .[[1]]
+        )
+    )
 }
     
 #reprex::reprex({

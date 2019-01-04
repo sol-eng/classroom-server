@@ -25,7 +25,7 @@ onStop(fun = function(){
     pool::poolClose(con)
     })
 
-    classroom <- tbl(con,  glue("{prefix}classroom"))
+    classroom <- tbl(con,  glue("{prefix}classroom")) %>% filter(status != 'CLOSED')
     
     student <- tbl(con, glue("{prefix}student"))
     
@@ -186,7 +186,8 @@ server <- function(input, output, session) {
         
         div(
             h2(glue::glue("{class_name}")),
-            div(class_desc %>% protect_empty(NULL)),
+            div(class_desc %>% protect_empty(NULL) %>% HTML()),
+            br(),
             p("Are you trying to get back to an existing instance?"),
             materialSwitch(inputId = "here_before_1", 
                            label = textOutput("here_before_1_label"), 
@@ -199,7 +200,7 @@ server <- function(input, output, session) {
         
     })
     
-    output$here_before_1_label <- renderText(ifelse(input$here_before_1, "Yes, existing", "No, this is my first time"))
+    output$here_before_1_label <- renderText(ifelse(input$here_before_1, "Yes, trying to find my instance", "No, this is my first time"))
     
     observeEvent(input$no_skip_1, {
         removeModal()
@@ -630,7 +631,7 @@ server <- function(input, output, session) {
                   p("Enter classroom information"),
                   textInput("new_class_name", "Name"),
                   textInput("new_class_password", "Class Password"),
-                  textAreaInput("new_class_desc", "Description")
+                  textAreaInput("new_class_description", "Description")
               )
               , title = "New classroom"
               , footer = div(actionButton("create_class_cancel", "Cancel"), actionButton("create_class_submit", "Submit"))
