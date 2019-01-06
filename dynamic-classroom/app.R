@@ -36,7 +36,7 @@ instance <- tbl(con, glue("{prefix}instance"))
 event <- tbl(con, glue("{prefix}event"))
 
 ui <- htmlTemplate(
-  "www/index.html",
+  "www/index.htm",
   init_cookie = initShinyCookie("cookie"),
   home_button = actionButton("back_to_0", "Home"),
   admin_button = uiOutput("admin_option"),
@@ -115,9 +115,8 @@ server <- function(input, output, session) {
               , session = session$token)
     
     div(
-      p("To begin, please enter the password that
-                your classroom instructor has provided."),
-      textInput("text_0", "Input Classroom Password:"),
+      tags$br(),
+      textInput("text_0", "Enter the password your instructor provided"),
       actionButton("submit_0", "Submit")
     )
     
@@ -184,20 +183,19 @@ server <- function(input, output, session) {
     div(
       h2(glue::glue("{class_name}")),
       div(class_desc %>% protect_empty(NULL) %>% HTML()),
-      br(),
-      p("Are you trying to get back to an existing instance?"),
-      checkboxInput(inputId = "here_before_1", 
-                    label = textOutput("here_before_1_label"), 
-                    value = TRUE),
-      p("Please enter your name and email address"),
-      textInput("name_1", "Name: "),
-      textInput("email_1", "Email: "),
+      textInput("name_1", "Name"),
+      textInput("email_1", "Email"),
+      materialSwitch(inputId = "here_before_1", 
+                     label = textOutput("here_before_1_label"), 
+                     status = "success"),
       actionButton("submit_1", "Submit")
     )
     
   })
   
-  output$here_before_1_label <- renderText(ifelse(input$here_before_1, "Yes, trying to find my instance", "No, this is my first time"))
+  output$here_before_1_label <- renderText(ifelse(input$here_before_1, 
+                                                  "Access my previous server credentials", 
+                                                  "Create new server credentials"))
   
   observeEvent(input$no_skip_1, {
     removeModal()

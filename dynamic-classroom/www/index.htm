@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<!-- Template by Quackit.com -->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+    <title>Workshop Servers</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS: You can use this stylesheet to override any Bootstrap styles and/or apply your own styles -->
+    <link href="css/custom.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <link rel="icon" type="image/ico" href="favicon.ico">
+
+        {{ headContent() }}
+        {{ bootstrapLib() }}
+
+
+</head>
+
+<body>
+
+
+	<div class="jumbotron feature">
+		<div class="container">
+		  <img src="RStudio-Logo-Gray.png" height="50">
+			<h1>Workshop Servers</h1>
+			<p>Register your server instance</p>
+		</div>
+	</div>
+
+    <!-- Content -->
+    <div class="container">
+
+        <!-- Heading -->
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header">Welcome
+                    <small>Obtain your login credentials below</small>
+                </h1>
+
+                      {{ init_cookie }}
+      {{ home_button }}
+      {{ admin_button }}
+      {{ page_0 }}
+      {{ page_1 }}
+      {{ page_2 }}
+      {{ page_10 }}
+      {{ page_10b }}
+
+            </div>
+        </div>
+      </div>
+
+        <div class="small-print">
+        	<div class="container">
+        		<p>Copyright &copy; 2019 RStudio.com | All rights reserved | <a href="https://www.rstudio.com/about/eula/">Legal Terms</a></p>
+        	</div>
+        </div>
+
+	
+    <!-- jQuery -->
+    <!--
+    <script src="js/jquery-1.11.3.min.js"></script>
+    -->
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+	
+	<!-- IE10 viewport bug workaround -->
+	<script src="js/ie10-viewport-bug-workaround.js"></script>
+	
+	<!-- Placeholder Images -->
+	<script src="js/holder.min.js"></script>
+	
+</body>
+
+</html>
