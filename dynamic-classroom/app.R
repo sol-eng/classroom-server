@@ -38,8 +38,8 @@ event <- tbl(con, glue("{prefix}event"))
 ui <- htmlTemplate(
   "www/index.htm",
   init_cookie = initShinyCookie("cookie"),
-  home_button = actionButton("back_to_0", "Home"),
-  admin_button = uiOutput("admin_option"),
+  home_button = actionLink("back_to_0", "Home"),
+  admin_button = htmlOutput("admin_option"),
   page_0 = uiOutput("page_0"), # %>% withSpinner(),
   page_1 = uiOutput("page_1"),
   page_2 = uiOutput("page_2"),
@@ -94,7 +94,7 @@ server <- function(input, output, session) {
   message("Rendering admin option")
   output$admin_option <- renderUI({
     if (is_admin(session$user)) {
-      actionButton("to_admin_page", "Admin Page")
+      actionLink("to_admin_page", "Admin Page")
     }
   })
   observeEvent(input$to_admin_page, {
