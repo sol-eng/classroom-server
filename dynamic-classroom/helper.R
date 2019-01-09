@@ -179,6 +179,14 @@
             return(query)
         }
     }
+  safe_logical <- function(input, default = FALSE){
+    input <- as.logical(input)
+    if (is.na(input) || length(input) == 0){
+      return(default)
+    } else {
+      return(input)
+    }
+  }
     
 is_admin <- function(user) {
   !is.null(user) && 
