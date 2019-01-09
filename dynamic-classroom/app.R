@@ -580,15 +580,6 @@ server <- function(input, output, session) {
       )
     )
   })
-  safe_name <- function(name){
-    if (is.null(name) || nchar(name) == 0) {
-      return(NULL)
-    } else if (is.name(name)){
-      return(name)
-    } else {
-      return(as.name(name))
-    }
-  }
   prep_instance_data <- reactive({
     sel_list <- c(
       identifier = safe_name(input$new_instance_identifier), 
