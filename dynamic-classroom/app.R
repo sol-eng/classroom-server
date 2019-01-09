@@ -39,7 +39,6 @@ ui <- htmlTemplate(
   "www/index.htm",
   init_cookie = initShinyCookie("cookie"),
   home_button = actionLink("back_to_0", "Home"),
-  admin_button = htmlOutput("admin_option"),
   page_0 = uiOutput("page_0"), # %>% withSpinner(),
   page_1 = uiOutput("page_1"),
   page_2 = uiOutput("page_2"),
@@ -83,15 +82,21 @@ server <- function(input, output, session) {
     
   }
   
-  message("Rendering admin option")
-  output$admin_option <- renderUI({
-    if (is_admin(session$user)) {
-      actionLink("to_admin_page", "Admin Page")
-    }
-  })
-  observeEvent(input$to_admin_page, {
-    state(10);
-  })
+  if (is_admin(session$user)) {
+    message("Rendering admin option")
+    insertUI(
+      "#navbar > ul",where = "beforeEnd", ui = tags$li(
+        actionLink("to_admin_page", "Admin Page")
+      )
+    )
+  }
+  
+  # important, as a user could otherwise hijack this with JS
+  if (is_admin(session$user)){
+    observeEvent(input$to_admin_page, {
+      state(10);
+    })
+  }
   
   observeEvent(input$back_to_0, {
     state(0);
