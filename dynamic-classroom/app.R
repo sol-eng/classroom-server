@@ -63,14 +63,6 @@ server <- function(input, output, session) {
   # state model -------------------------------
   
   state <- reactiveVal(0, label = "state")
-  safe_logical <- function(input, default = FALSE){
-    input <- as.logical(input)
-    if (is.na(input) || length(input) == 0){
-      return(default)
-    } else {
-      return(input)
-    }
-  }
   if (is_admin(session$user)) {
     # only define items in an admin context 
     #(so we do not waste bandwidth on the client / server)
