@@ -179,9 +179,26 @@
             return(query)
         }
     }
+  safe_logical <- function(input, default = FALSE){
+    input <- as.logical(input)
+    if (is.na(input) || length(input) == 0){
+      return(default)
+    } else {
+      return(input)
+    }
+  }
+  safe_name <- function(name){
+    if (is.null(name) || nchar(name) == 0) {
+      return(NULL)
+    } else if (is.name(name)){
+      return(name)
+    } else {
+      return(as.name(name))
+    }
+  }
     
 is_admin <- function(user) {
-  !is.null(user) && 
+  (!is.null(user) && 
     (
       stringr::str_detect(user, "^.*@rstudio.com$") || 
         user == "cole" ||
@@ -190,7 +207,8 @@ is_admin <- function(user) {
             strsplit(split = "\\|") %>%
             .[[1]]
         )
-    )
+    )) ||
+    nchar(Sys.getenv("RSTUDIO_USER_IDENTITY")) > 0
 }
     
 #reprex::reprex({
