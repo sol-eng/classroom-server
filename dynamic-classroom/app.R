@@ -516,132 +516,6 @@ server <- function(input, output, session) {
     )
   })
   
-  output$admin_selected_class <- renderText(classroom %>% 
-                                              filter(classroomid == input$admin_class) %>%
-                                              pull(name))
-  observeEvent(input$upload_instances, {
-    showModal(
-      modalDialog(
-        div(
-          p("Upload instances for: ", textOutput("admin_selected_class")),
-          
-          fileInput("new_instance_file", label = "Upload File", multiple = FALSE),
-          checkboxInput("new_instance_heading", label = "Heading?", value = FALSE),
-          uiOutput("new_instance_select_colnames"),
-          DT::dataTableOutput("display_new_instance_data")
-        )
-        , title = "Upload instance data"
-        , footer = div(actionButton("new_instance_cancel", "Cancel"), actionButton("new_instance_submit", "Submit"))
-        , size = "l"
-      )
-    )
-  })
-  observeEvent(input$new_instance_cancel, {removeModal()})
-  observeEvent(input$new_instance_submit, {
-    removeModal()
-    showNotification(
-      "Submitting instance data to the database", type = "message"
-    )
-    dbWriteTable(
-      conn = con,
-      name = Id(schema = schema, table = glue::glue("{prefix}instance")),
-      value = prep_instance_data(),
-      overwrite = FALSE,
-      append = TRUE
-    )
-    showNotification(
-      "Finished submitting instance data to the database", type = "message"
-    )
-  })
-  new_instance_file <- reactive({
-    message("Executing new_instance_file reactive")
-    
-    validate(need(input$new_instance_file, message = FALSE))
-    input$new_instance_file
-  })
-  new_instance_data <- reactive({
-    raw_data <- readr::read_csv(
-      new_instance_file()$datapath, 
-      col_names = input$new_instance_heading
-    )
-    
-    return(raw_data)
-  })
-  new_instance_colnames <- reactive({
-    c("Choose a column" = "", colnames(new_instance_data()))
-  })
-  output$new_instance_select_colnames <- renderUI({
-    req(new_instance_colnames())  
-    div(
-      column(
-        6,
-        selectizeInput("new_instance_identifier", label = "Identifier", choices = new_instance_colnames(), multiple = FALSE),
-        selectizeInput("new_instance_url", label = "Url", choices = new_instance_colnames(), multiple = FALSE)
-      ),
-      column(
-        6,
-        selectizeInput("new_instance_username", label = "Username", choices = new_instance_colnames(), multiple = FALSE),
-        selectizeInput("new_instance_password", label = "Password", choices = new_instance_colnames(), multiple = FALSE)
-      )
-    )
-  })
-  prep_instance_data <- reactive({
-    sel_list <- c(
-      identifier = safe_name(input$new_instance_identifier), 
-      url = safe_name(input$new_instance_url),
-      username = safe_name(input$new_instance_username),
-      password = safe_name(input$new_instance_password)
-    )
-    new_instance_data() %>%
-      mutate(
-        !!!sel_list,
-        classroomid = input$admin_class
-      ) %>%
-      select(!!!names(sel_list), classroomid)
-  })
-  output$display_new_instance_data <- DT::renderDataTable({
-    DT::datatable(prep_instance_data())
-  })
-  observeEvent(input$create_class, {
-    showModal(
-      modalDialog(
-        div(
-          p("Enter classroom information"),
-          textInput("new_class_name", "Name"),
-          textInput("new_class_password", "Class Password"),
-          textAreaInput("new_class_description", "Description")
-        )
-        , title = "New classroom"
-        , footer = div(actionButton("create_class_cancel", "Cancel"), actionButton("create_class_submit", "Submit"))
-      )
-    )
-  })
-  observeEvent(input$create_class_cancel, {removeModal()})
-  observeEvent(input$create_class_submit, {
-    new_class <- add_classroom(
-      con = con, schema = schema, prefix = prefix,
-      name = input$new_class_name,
-      password = input$new_class_password,
-      status = "ACTIVE",
-      description = input$new_class_description
-    )
-    if (nrow(new_class) > 0) {
-      showNotification(
-        glue::glue("Successfully created classroom: {new_class$classroomid}"),
-        type = "message"
-      )
-    } else {
-      showNotification(
-        "Something went wrong creating the classroom...",
-        type = "warning"
-      )
-    }
-    removeModal()
-  })
-  
-  observeEvent(input$force_refresh, {
-    refresh(refresh() + 1)
-  })
   output$page_10b <- renderUI({
     req(state() == 10);
     
@@ -809,6 +683,138 @@ server <- function(input, output, session) {
     )
   })
   
+  # admin-supportive-functionality -----------------------
+  if (is_admin(session$user)) {
+      output$admin_selected_class <- renderText(classroom %>% 
+                                                  filter(classroomid == input$admin_class) %>%
+                                                  pull(name))
+      observeEvent(input$upload_instances, {
+        showModal(
+          modalDialog(
+            div(
+              p("Upload instances for: ", textOutput("admin_selected_class")),
+              
+              fileInput("new_instance_file", label = "Upload File", multiple = FALSE),
+              checkboxInput("new_instance_heading", label = "Heading?", value = FALSE),
+              uiOutput("new_instance_select_colnames"),
+              DT::dataTableOutput("display_new_instance_data")
+            )
+            , title = "Upload instance data"
+            , footer = div(actionButton("new_instance_cancel", "Cancel"), actionButton("new_instance_submit", "Submit"))
+            , size = "l"
+          )
+        )
+      })
+      observeEvent(input$new_instance_cancel, {removeModal()})
+      observeEvent(input$new_instance_submit, {
+        removeModal()
+        showNotification(
+          "Submitting instance data to the database", type = "message"
+        )
+        dbWriteTable(
+          conn = con,
+          name = Id(schema = schema, table = glue::glue("{prefix}instance")),
+          value = prep_instance_data(),
+          overwrite = FALSE,
+          append = TRUE
+        )
+        showNotification(
+          "Finished submitting instance data to the database", type = "message"
+        )
+      })
+      new_instance_file <- reactive({
+        message("Executing new_instance_file reactive")
+        
+        validate(need(input$new_instance_file, message = FALSE))
+        input$new_instance_file
+      })
+      new_instance_data <- reactive({
+        raw_data <- readr::read_csv(
+          new_instance_file()$datapath, 
+          col_names = input$new_instance_heading
+        )
+        
+        return(raw_data)
+      })
+      new_instance_colnames <- reactive({
+        c("Choose a column" = "", colnames(new_instance_data()))
+      })
+      output$new_instance_select_colnames <- renderUI({
+        req(new_instance_colnames())  
+        div(
+          column(
+            6,
+            selectizeInput("new_instance_identifier", label = "Identifier", choices = new_instance_colnames(), multiple = FALSE),
+            selectizeInput("new_instance_url", label = "Url", choices = new_instance_colnames(), multiple = FALSE)
+          ),
+          column(
+            6,
+            selectizeInput("new_instance_username", label = "Username", choices = new_instance_colnames(), multiple = FALSE),
+            selectizeInput("new_instance_password", label = "Password", choices = new_instance_colnames(), multiple = FALSE)
+          )
+        )
+      })
+      prep_instance_data <- reactive({
+        sel_list <- c(
+          identifier = safe_name(input$new_instance_identifier), 
+          url = safe_name(input$new_instance_url),
+          username = safe_name(input$new_instance_username),
+          password = safe_name(input$new_instance_password)
+        )
+        new_instance_data() %>%
+          mutate(
+            !!!sel_list,
+            classroomid = input$admin_class
+          ) %>%
+          select(!!!names(sel_list), classroomid)
+      })
+      output$display_new_instance_data <- DT::renderDataTable({
+        DT::datatable(prep_instance_data())
+      })
+      observeEvent(input$create_class, {
+        showModal(
+          modalDialog(
+            div(
+              p("Enter classroom information"),
+              textInput("new_class_name", "Name"),
+              textInput("new_class_password", "Class Password"),
+              textAreaInput("new_class_description", "Description")
+            )
+            , title = "New classroom"
+            , footer = div(actionButton("create_class_cancel", "Cancel"), actionButton("create_class_submit", "Submit"))
+          )
+        )
+      })
+      observeEvent(input$create_class_cancel, {removeModal()})
+      observeEvent(input$create_class_submit, {
+        new_class <- add_classroom(
+          con = con, schema = schema, prefix = prefix,
+          name = input$new_class_name,
+          password = input$new_class_password,
+          status = "ACTIVE",
+          description = input$new_class_description
+        )
+        if (nrow(new_class) > 0) {
+          showNotification(
+            glue::glue("Successfully created classroom: {new_class$classroomid}"),
+            type = "message"
+          )
+        } else {
+          showNotification(
+            "Something went wrong creating the classroom...",
+            type = "warning"
+          )
+        }
+        removeModal()
+      })
+      
+      observeEvent(input$force_refresh, {
+        refresh(refresh() + 1)
+      })
+        
+  }
+  
+  # other helpers ---------------------------------
   observeEvent(input$admin_back_to_app, {
     state(0);
   })
