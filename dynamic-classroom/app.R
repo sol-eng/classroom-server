@@ -189,7 +189,7 @@ server <- function(input, output, session) {
                   cookie = active_cookie())
         
         showNotification(
-          "Sorry, we could not find your instance based on the cookie.
+          "Sorry, we could not find your instance based on the cookie in your browser.
                   Please enter your identifying information"
           , type = "error"
         )
