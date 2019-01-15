@@ -220,23 +220,6 @@ server <- function(input, output, session) {
               cookie = active_cookie(),
               other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
     )
-    showModal(
-      modalDialog(
-        div(
-          p("This application uses cookies to ensure 
-                      that you have a good user experience. 
-                      Do you give your consent to do so?")
-        )
-        , title = "Your Information"
-        , footer = div(actionButton("no_modal_1", "No"), actionButton("yes_modal_1", "Yes"))
-      )
-    )
-    
-  })
-  
-  
-  observeEvent(input$yes_modal_1, {
-    removeModal()
     
     input_email <- input$email_1 %>% 
       stringr::str_to_lower() %>%
@@ -426,16 +409,7 @@ server <- function(input, output, session) {
       )
     }
     
-  })
-  
-  observeEvent(input$no_modal_1, {
-    #state(0)
-    log_event(
-      con = con, schema = schema, prefix = prefix, event = "Decline consent"
-      , session = session$token, classroomid = active_class(),
-      cookie = active_cookie()
-    )
-    removeModal()
+    
   })
   
   # state = 2 : Classroom information  --------------------------
