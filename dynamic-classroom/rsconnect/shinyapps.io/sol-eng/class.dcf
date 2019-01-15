@@ -5,9 +5,9 @@ account: sol-eng
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 603149
-bundleId: 1756541
+bundleId: 1808768
 url: https://sol-eng.shinyapps.io/class/
-when: 1544565061.43296
+when: 1547209808.02803
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: add_instances_20180913.html|add_instances_pass.html|add_instances.html|add_instances.Rmd|attendees_v10.xlsx|bg_stderr.log|bg_stdout.log|create_table.R|myfile.csv|myfile.txt|print|profile-time.Rprofvis|profiling.Rprofvis|spglobal-final-1.csv|spglobal-final-2.csv|user_parse_20180913.html|user_parse.Rmd|www/rstudio.css|www/images/rstudio-conf.jpg|www/images/rstudio.png
+ignoredFiles: add_instances_20180913.html|add_instances_pass.html|add_instances.html|add_instances.Rmd|adhoc.R|attendees_v10.xlsx|create_table.R|profile-time.Rprofvis|profiling.Rprofvis|spglobal-final-1.csv|spglobal-final-2.csv|user_parse_20180913.html|user_parse.Rmd
