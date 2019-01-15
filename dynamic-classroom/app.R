@@ -25,7 +25,7 @@ onStop(fun = function(){
   pool::poolClose(con)
 })
 
-classroom <- tbl(con,  glue("{prefix}classroom")) %>% filter(status != 'CLOSED')
+classroom <- tbl(con,  glue("{prefix}classroom")) %>% filter(status == 'ACTIVE')
 
 student <- tbl(con, glue("{prefix}student"))
 
@@ -113,7 +113,7 @@ server <- function(input, output, session) {
     
     div(
       tags$br(),
-      textInput("text_0", "Enter the password your instructor provided"),
+      textInput("text_0", "Workshop identifier"),
       actionButton("submit_0", "Submit")
     )
     
@@ -180,7 +180,7 @@ server <- function(input, output, session) {
     div(
       h2(glue::glue("{class_name}")),
       div(class_desc %>% protect_empty(NULL) %>% HTML()),
-      textInput("name_1", "Name"),
+      textInput("name_1", "Full Name"),
       textInput("email_1", "Email"),
       materialSwitch(inputId = "here_before_1", 
                      label = textOutput("here_before_1_label"), 
