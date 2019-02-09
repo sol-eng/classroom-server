@@ -166,15 +166,34 @@ server <- function(input, output, session) {
     class_desc <- classroom_record %>% pull(description)
     
     if (!is.null(active_cookie())) {
-      showModal(
-        modalDialog(
-          div(
-            p("We noticed that you have been here before. Would you like to proceed automatically?")
-          )
-          , title = "Skip this step"
-          , footer = div(actionButton("no_skip_1", "No"), actionButton("yes_skip_1", "Yes"))
+      # get student from cookie
+      classid <-  as.integer(active_class())
+      user_cookie <- active_cookie()
+      curr_student <- student %>%
+        filter(classroomid == classid, cookie == user_cookie)
+      
+      
+      if (curr_student %>% tally() %>% pull(n) > 0) {
+        # found student
+        log_event(con, schema, prefix, event = "Found student based on cookie", 
+                  session = session$token,
+                  classroomid = active_class(), studentid = active_student(),
+                  cookie = active_cookie())
+        active_student(curr_student %>% pull(studentid) %>% .[[1]])
+        state(2)
+      } else {
+        # student not found
+        log_event(con, schema, prefix, event = "WARNING: Could not find student based on cookie", 
+                  session = session$token,
+                  classroomid = active_class(), studentid = active_student(),
+                  cookie = active_cookie())
+        
+        showNotification(
+          "Sorry, we could not find your instance based on the cookie in your browser.
+                  Please enter your identifying information"
+          , type = "error"
         )
-      )
+      }
     }
     
     div(
@@ -194,42 +213,6 @@ server <- function(input, output, session) {
                                                   "Access my previous server credentials", 
                                                   "Create new server credentials"))
   
-  observeEvent(input$no_skip_1, {
-    removeModal()
-  })
-  observeEvent(input$yes_skip_1, {
-    removeModal()
-    
-    # get student from cookie
-    classid <-  as.integer(active_class())
-    user_cookie <- active_cookie()
-    curr_student <- student %>%
-      filter(classroomid == classid, cookie == user_cookie)
-    
-    
-    if (curr_student %>% tally() %>% pull(n) > 0) {
-      # found student
-      log_event(con, schema, prefix, event = "Found student based on cookie", 
-                session = session$token,
-                classroomid = active_class(), studentid = active_student(),
-                cookie = active_cookie())
-      active_student(curr_student %>% pull(studentid) %>% .[[1]])
-      state(2)
-    } else {
-      # student not found
-      log_event(con, schema, prefix, event = "WARNING: Could not find student based on cookie", 
-                session = session$token,
-                classroomid = active_class(), studentid = active_student(),
-                cookie = active_cookie())
-      
-      showNotification(
-        "Sorry, we could not find your instance based on the cookie.
-                Please enter your identifying information"
-        , type = "error"
-      )
-    }
-  })
-  
   observeEvent(input$submit_1, {
     log_event(con, schema, prefix, "Submitted name and email", 
               session = session$token,
@@ -237,23 +220,6 @@ server <- function(input, output, session) {
               cookie = active_cookie(),
               other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
     )
-    showModal(
-      modalDialog(
-        div(
-          p("This application uses cookies to ensure 
-                      that you have a good user experience. 
-                      Do you give your consent to do so?")
-        )
-        , title = "Your Information"
-        , footer = div(actionButton("no_modal_1", "No"), actionButton("yes_modal_1", "Yes"))
-      )
-    )
-    
-  })
-  
-  
-  observeEvent(input$yes_modal_1, {
-    removeModal()
     
     input_email <- input$email_1 %>% 
       stringr::str_to_lower() %>%
@@ -443,16 +409,7 @@ server <- function(input, output, session) {
       )
     }
     
-  })
-  
-  observeEvent(input$no_modal_1, {
-    #state(0)
-    log_event(
-      con = con, schema = schema, prefix = prefix, event = "Decline consent"
-      , session = session$token, classroomid = active_class(),
-      cookie = active_cookie()
-    )
-    removeModal()
+    
   })
   
   # state = 2 : Classroom information  --------------------------
