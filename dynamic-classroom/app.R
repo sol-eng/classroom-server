@@ -202,17 +202,15 @@ server <- function(input, output, session) {
       textInput("email_1", "Email"),
       materialSwitch(inputId = "here_before_1",
                      label = textOutput("here_before_1_label"),
-                     status = "success"),
+                     status = "success", value = TRUE),
       actionButton("submit_1", "Submit")
     )
 
   })
 
-  output$here_before_1_label <- renderText(ifelse(input$here_before_1,
-                                                  glue("Hit Submit now to - Look up previous server credentials \\
-                                                        Toggle here to - Create new server credentials"),
-                                                  glue("Hit Submit now to - Create new server credentials \\
-                                                        Toggle here to - Look up previous server credentials")))
+  output$here_before_1_label <- renderText(ifelse(!input$here_before_1,
+                                                  "Look up previous server credentials",
+                                                  "Create new server credentials"))
 
   observeEvent(input$submit_1, {
     log_event(con, schema, prefix, "Submitted name and email",
@@ -280,7 +278,7 @@ server <- function(input, output, session) {
 
       state(2)
     } else if (
-      !input$here_before_1 ||
+      input$here_before_1 ||
       (curr_student %>% tally() %>% pull(n) > 0 &&
        curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) == 0
       )
