@@ -11,7 +11,6 @@ library(shinyWidgets)
 
 source("helper.R")
 
-
 cfg <- config::get("database", file = "config.yml")
 con <- do.call(pool::dbPool, cfg)
 
@@ -49,29 +48,29 @@ ui <- htmlTemplate(
 server <- function(input, output, session) {
   message("Starting server")
   # useful objects ---------------------------
-  
-  
+
+
   active_class <- reactiveVal(value = NULL, label = "selected_class")
   active_student <- reactiveVal(value = NULL, label = "selected_student")
-  
+
   active_cookie <- reactiveVal(value = NULL, label = "current_cookie")
-  
+
   refresh <- reactiveVal(value = 0, label = "force_refresh")
-  
+
   message("Starting state model")
   # state model -------------------------------
-  
+
   state <- reactiveVal(0, label = "state")
   if (is_admin(session$user)) {
-    # only define items in an admin context 
+    # only define items in an admin context
     #(so we do not waste bandwidth on the client / server)
     classroom_vector <- reactivePoll(
-      10000, 
+      10000,
       session = session
       , checkFunc = function(){
         message("Checking for classroom updates")
         dbGetQuery(
-          con, 
+          con,
           glue("SELECT max(lastmodified) FROM {schema}.{prefix}classroom;")
         )
       }
@@ -79,9 +78,9 @@ server <- function(input, output, session) {
         as.list(set_names(classroom %>% pull(classroomid), classroom %>% pull(name)))
       }
     )
-    
+
   }
-  
+
   if (is_admin(session$user)) {
     message("Rendering admin option")
     insertUI(
@@ -90,35 +89,35 @@ server <- function(input, output, session) {
       )
     )
   }
-  
+
   # important, as a user could otherwise hijack this with JS
   if (is_admin(session$user)){
     observeEvent(input$to_admin_page, {
       state(10);
     })
   }
-  
+
   observeEvent(input$back_to_0, {
     state(0);
   })
-  
-  
+
+
   message("Compiling state 0")
   # state = 0 : prompt for password --------------------------
   output$page_0 <- renderUI({
     req(state() == 0);
-    
+
     log_event(con = con, schema = schema, prefix = prefix, event = "Reached state: 0"
               , session = session$token)
-    
+
     div(
       tags$br(),
       textInput("text_0", "Workshop identifier"),
       actionButton("submit_0", "Submit")
     )
-    
+
   })
-  
+
   # check that password matches a classroom
   observeEvent(input$submit_0, {
     if (input$text_0 %in% (classroom %>% pull(password))) {
@@ -131,17 +130,17 @@ server <- function(input, output, session) {
         # keep just ID, so we have to look things up each time
         # beware deletion of an ID...
         active_class(selected_record %>% pull(classroomid))
-        
+
         active_cookie(input$cookie[[glue("classroom{active_class()}")]])
-        
+
         log_event(con = con, schema = schema, prefix = prefix, event = "Entering classroom"
                   , session = session$token, classroomid = active_class()
                   , cookie = active_cookie())
         state(1);
       }
     } else {
-      log_event(con = con, schema = schema, prefix = prefix, 
-                event = "WARNING: Password attempt failed", 
+      log_event(con = con, schema = schema, prefix = prefix,
+                event = "WARNING: Password attempt failed",
                 other = glue::glue("Password: {input$text_0}"),
                 session = session$token)
       showNotification(
@@ -151,12 +150,12 @@ server <- function(input, output, session) {
       )
     }
   })
-  
+
   # state = 1 : prompt for name and email  --------------------------
   output$page_1 <- renderUI({
     req(state() == 1);
-    
-    log_event(con, schema, prefix, "Reached state: 1", 
+
+    log_event(con, schema, prefix, "Reached state: 1",
               session = session$token,
               classroomid = active_class(),
               cookie = active_cookie())
@@ -164,7 +163,7 @@ server <- function(input, output, session) {
     classroom_record <- classroom %>% filter(classroomid == classid)
     class_name <- classroom_record %>% pull(name)
     class_desc <- classroom_record %>% pull(description)
-    
+
     if (!is.null(active_cookie())) {
       # get student from cookie
       classid <-  as.integer(active_class())
@@ -195,28 +194,28 @@ server <- function(input, output, session) {
         )
       }
     }
-    
+
     div(
       h2(glue::glue("{class_name}")),
       div(class_desc %>% protect_empty(NULL) %>% HTML()),
       textInput("name_1", "Full Name"),
       textInput("email_1", "Email"),
-      materialSwitch(inputId = "here_before_1", 
-                     label = textOutput("here_before_1_label"), 
-                     status = "success"),
+      materialSwitch(inputId = "here_before_1",
+                     label = textOutput("here_before_1_label"),
+                     status = "success", value = TRUE),
       actionButton("submit_1", "Submit")
     )
-    
+
   })
-  
-  output$here_before_1_label <- renderText(ifelse(input$here_before_1, 
-                                                  "Access my previous server credentials", 
+
+  output$here_before_1_label <- renderText(ifelse(!input$here_before_1,
+                                                  "Look up previous server credentials",
                                                   "Create new server credentials"))
-  
+
   observeEvent(input$submit_1, {
-    log_event(con, schema, prefix, "Submitted name and email", 
+    log_event(con, schema, prefix, "Submitted name and email",
               session = session$token,
-              classroomid = active_class(), 
+              classroomid = active_class(),
               cookie = active_cookie(),
               other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
     )
@@ -226,17 +225,17 @@ server <- function(input, output, session) {
       stringr::str_trim()
     # lookup of the current student by email
     classid <- as.integer(active_class())
-    curr_student <- student %>% 
+    curr_student <- student %>%
       filter(classroomid == classid, tolower(email) == input_email)
-    
-    if (curr_student %>% tally() %>% pull(n) > 0 && 
+
+    if (curr_student %>% tally() %>% pull(n) > 0 &&
         curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) > 0
     ) {
       # found student and claim
-      
+
       active_student(curr_student %>% pull(studentid))
-      
-      log_event(con, schema, prefix, event = "Found student", 
+
+      log_event(con, schema, prefix, event = "Found student",
                 session = session$token,
                 classroomid = active_class(), studentid = active_student(),
                 cookie = active_cookie())
@@ -248,7 +247,7 @@ server <- function(input, output, session) {
                        , prefix = prefix
                        , studentid = active_student()
                        , name = input$name_1)
-      
+
       # set cookie
       if (is.null(input$cookie[[glue("classroom{active_class()}")]])) {
         active_cookie(UUIDgenerate())
@@ -276,12 +275,12 @@ server <- function(input, output, session) {
                            , studentid = active_student()
                            , cookie = active_cookie())
       }
-      
+
       state(2)
-    } else if ( 
-      !input$here_before_1 || 
+    } else if (
+      input$here_before_1 ||
       (curr_student %>% tally() %>% pull(n) > 0 &&
-       curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) == 0 
+       curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) == 0
       )
     ) {
       # did not find student/instance, new student
@@ -289,10 +288,10 @@ server <- function(input, output, session) {
       if (class_status != "ACTIVE") {
         # new students not welcome...
         log_event(
-          con, schema, prefix, 
-          glue::glue("WARNING: Tried to claim new instance with classroom state: {class_status}"), 
-          session=session$token, 
-          classroomid = active_class(), 
+          con, schema, prefix,
+          glue::glue("WARNING: Tried to claim new instance with classroom state: {class_status}"),
+          session=session$token,
+          classroomid = active_class(),
           cookie = active_cookie(),
           other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
         )
@@ -303,10 +302,10 @@ server <- function(input, output, session) {
       } else {
         # welcome, new student!
         log_event(
-          con, schema, prefix, 
-          "Add student and Claim instance", 
-          session=session$token, 
-          classroomid = active_class(), 
+          con, schema, prefix,
+          "Add student and Claim instance",
+          session=session$token,
+          classroomid = active_class(),
           cookie = active_cookie(),
           other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
         )
@@ -318,10 +317,10 @@ server <- function(input, output, session) {
           )
           active_student(new_student %>% pull(studentid))
         } else {
-          # existing student  
+          # existing student
           active_student(curr_student %>% pull(studentid))
-          
-          log_event(con, schema, prefix, event = "Found student", 
+
+          log_event(con, schema, prefix, event = "Found student",
                     session = session$token,
                     classroomid = active_class(), studentid = active_student(),
                     cookie = active_cookie())
@@ -334,7 +333,7 @@ server <- function(input, output, session) {
                             , prefix = prefix
                             , student = active_student()
                             , consent = "true")
-        
+
         # set cookie
         if (is.null(input$cookie[[glue("classroom{active_class()}")]])) {
           active_cookie(UUIDgenerate())
@@ -362,31 +361,31 @@ server <- function(input, output, session) {
                              , studentid = active_student()
                              , cookie = active_cookie())
         }
-        
+
         # claim available instance
         claim_instance <- add_claim(
-          con = con, 
-          schema = schema, 
-          prefix = prefix, 
-          classroomid = active_class(), 
+          con = con,
+          schema = schema,
+          prefix = prefix,
+          classroomid = active_class(),
           studentid = active_student()
         )
         if (claim_instance %>% tally() %>% pull(n) == 1) {
           # successful claim
-          log_event(con, schema, prefix, event = "Successful instance claim", 
+          log_event(con, schema, prefix, event = "Successful instance claim",
                     session = session$token,
-                    classroomid = active_class(), studentid = active_student(), 
+                    classroomid = active_class(), studentid = active_student(),
                     instanceid = claim_instance %>% pull(instanceid),
                     cookie = active_cookie())
-          
+
           state(2)
         } else {
           # unsuccessful claim
-          log_event(con, schema, prefix, event = "WARNING: Failed to claim instance", 
+          log_event(con, schema, prefix, event = "WARNING: Failed to claim instance",
                     session = session$token,
                     classroomid = active_class(), studentid = active_student(),
                     cookie = active_cookie())
-          
+
           showNotification(
             "Sorry, an instance is not available at this time. Please contact your TA.",
             type = "error"
@@ -395,56 +394,54 @@ server <- function(input, output, session) {
       }
     } else {
       # did not find student, and is a returning user
-      log_event(con, schema, prefix, "WARNING: User not found!!", 
+      log_event(con, schema, prefix, "WARNING: User not found!!",
                 session = session$token,
-                classroomid = active_class(), 
+                classroomid = active_class(),
                 cookie = active_cookie(),
                 other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
       )
       showNotification(
-        "Sorry, your email was not found in the classroom. 
+        "Sorry, your email was not found in the classroom.
                 Please double check spelling and try again. Otherwise,
                 you can contact a TA for assistance."
         , type = "error"
       )
     }
-    
-    
   })
-  
+
   # state = 2 : Classroom information  --------------------------
   output$page_2 <- renderUI({
     req(state() == 2);
-    
-    log_event(con, schema, prefix, "Reached state: 2", 
+
+    log_event(con, schema, prefix, "Reached state: 2",
               session = session$token,
               classroomid = active_class(), studentid = active_student()
               , cookie = active_cookie())
-    
+
     current_student <- active_student()
     student_claim <- claim %>% filter(studentid == current_student)
     claim_id <- student_claim %>% pull(instanceid)
-    
+
     if (length(claim_id) == 0) {
       log_event(con = con, schema = schema, prefix = prefix, event = "WARNING: No server found",
                 session = session$token, classroomid = active_class(), studentid = active_student()
                 , cookie = active_cookie())
     }
-    validate(need(length(claim_id) > 0, 
+    validate(need(length(claim_id) > 0,
                   message = "I'm sorry. No server is available at present. We will fix this as soon as we can!!",
                   "no_server"
     ))
-    student_instance <- instance %>% 
+    student_instance <- instance %>%
       filter(instanceid %in% claim_id) %>%
       collect()
-    
-    log_event(con, schema, prefix, "Found instance", 
+
+    log_event(con, schema, prefix, "Found instance",
               session = session$token,
               classroomid = active_class(), studentid = active_student()
               , instanceid = student_instance %>% pull(instanceid) %>% .[[1]]
               , cookie = active_cookie()
     )
-    
+
     student_url <- student_instance %>% pull(url) %>% .[[1]]
     student_user <- student_instance %>% pull(username) %>% .[[1]]
     student_pass <- student_instance %>% pull(password) %>% .[[1]]
@@ -454,14 +451,14 @@ server <- function(input, output, session) {
         ,href=as.character(student_url)
         , target="_blank"),
       p(paste("User:",student_user)),
-      p(paste("Password:", student_pass)) 
+      p(paste("Password:", student_pass))
     )
   })
-  
+
   # state = 10 : Admin page -----------------------
   output$page_10 <- renderUI({
     req(state() == 10);
-    
+
     fluidPage(
       h3("Admin page"),
       actionButton("admin_back_to_app", "Back to App"),
@@ -472,14 +469,14 @@ server <- function(input, output, session) {
       actionButton("upload_instances", "Upload Instances")
     )
   })
-  
+
   output$page_10b <- renderUI({
     req(state() == 10);
-    
+
     req(input$admin_class)
     admin_selected_class <- input$admin_class
     admin_null_event <- input$show_null_events
-    
+
     output$event_dt <- DT::renderDataTable(
       event %>%
         filter(classroomid == admin_selected_class || (is.na(classroomid) && admin_null_event)) %>%
@@ -494,28 +491,28 @@ server <- function(input, output, session) {
       intervalMillis = 10000,
       session = session,
       checkFunc = function(){
-        student %>% 
-          filter(classroomid == admin_selected_class) %>% 
+        student %>%
+          filter(classroomid == admin_selected_class) %>%
           tally() %>% pull(n)
       },
       valueFunc = function(){
         req(admin_selected_class)
-        student %>% 
+        student %>%
           filter(classroomid == admin_selected_class) %>%
-          select(studentid, classroomid, name, email, consent, cookie) %>% 
+          select(studentid, classroomid, name, email, consent, cookie) %>%
           collect()
       }
     )
     output$admin_student_dt <- DT::renderDataTable(
       admin_student_data() %>% DT::datatable()
     )
-    
+
     admin_instance_data <- reactivePoll(
       intervalMillis = 10000,
       session = session,
       checkFunc = function(){
-        instance %>% 
-          filter(classroomid == admin_selected_class) %>% 
+        instance %>%
+          filter(classroomid == admin_selected_class) %>%
           tally() %>% pull(n)
       },
       valueFunc = function() {
@@ -529,15 +526,15 @@ server <- function(input, output, session) {
     output$admin_instance_dt <- DT::renderDataTable({
       admin_instance_data() %>% DT::datatable()
     })
-    
+
     admin_unclaimed_instance_data <- reactivePoll(
       intervalMillis = 10000,
       session = session,
       checkFunc = function(){
         instance %>%
-          filter(classroomid == admin_selected_class) %>% 
+          filter(classroomid == admin_selected_class) %>%
           anti_join(
-            claim, 
+            claim,
             by = c("classroomid", "instanceid")
           ) %>%
           tally() %>% pull(n)
@@ -557,12 +554,12 @@ server <- function(input, output, session) {
     output$admin_unclaimed_instance_dt <- DT::renderDataTable({
       admin_unclaimed_instance_data() %>% DT::datatable()
     })
-    
+
     admin_claim_data <- reactivePoll(
       intervalMillis = 10000,
       session = session,
       checkFunc = function(){
-        claim %>% 
+        claim %>%
           filter(classroomid == admin_selected_class) %>%
           tally() %>%
           pull(n)
@@ -575,16 +572,16 @@ server <- function(input, output, session) {
       }
     )
     output$admin_claim_dt <- DT::renderDataTable({
-      admin_claim_data() %>% DT::datatable()   
+      admin_claim_data() %>% DT::datatable()
     })
     admin_join_data <- reactivePoll(
       intervalMillis = 10000,
       session = session,
       checkFunc = function(){
         list(
-          claim %>% 
-            filter(classroomid == admin_selected_class) %>% 
-            summarize(out=max(claimid, na.rm = TRUE)) %>% 
+          claim %>%
+            filter(classroomid == admin_selected_class) %>%
+            summarize(out=max(claimid, na.rm = TRUE)) %>%
             pull(out),
           student %>%
             filter(classroomid == admin_selected_class) %>%
@@ -600,7 +597,7 @@ server <- function(input, output, session) {
         student %>% filter(classroomid == admin_selected_class) %>%
           select(studentid, classroomid, name, email) %>%
           left_join(
-            claim %>% select(classroomid, studentid, instanceid), 
+            claim %>% select(classroomid, studentid, instanceid),
             by = c("classroomid", "studentid")) %>%
           left_join(
             instance %>% select(instanceid, classroomid, identifier, url, username, password)
@@ -609,12 +606,12 @@ server <- function(input, output, session) {
           collect()
       }
     )
-    
+
     output$admin_join_dt <- DT::renderDataTable({
       admin_join_data() %>% DT::datatable()
     })
-    
-    
+
+
     div(
       h3("Tables"),
       tabsetPanel(
@@ -639,10 +636,10 @@ server <- function(input, output, session) {
       )
     )
   })
-  
+
   # admin-supportive-functionality -----------------------
   if (is_admin(session$user)) {
-      output$admin_selected_class <- renderText(classroom %>% 
+      output$admin_selected_class <- renderText(classroom %>%
                                                   filter(classroomid == input$admin_class) %>%
                                                   pull(name))
       observeEvent(input$upload_instances, {
@@ -650,7 +647,7 @@ server <- function(input, output, session) {
           modalDialog(
             div(
               p("Upload instances for: ", textOutput("admin_selected_class")),
-              
+
               fileInput("new_instance_file", label = "Upload File", multiple = FALSE),
               checkboxInput("new_instance_heading", label = "Heading?", value = FALSE),
               uiOutput("new_instance_select_colnames"),
@@ -681,23 +678,23 @@ server <- function(input, output, session) {
       })
       new_instance_file <- reactive({
         message("Executing new_instance_file reactive")
-        
+
         validate(need(input$new_instance_file, message = FALSE))
         input$new_instance_file
       })
       new_instance_data <- reactive({
         raw_data <- readr::read_csv(
-          new_instance_file()$datapath, 
+          new_instance_file()$datapath,
           col_names = input$new_instance_heading
         )
-        
+
         return(raw_data)
       })
       new_instance_colnames <- reactive({
         c("Choose a column" = "", colnames(new_instance_data()))
       })
       output$new_instance_select_colnames <- renderUI({
-        req(new_instance_colnames())  
+        req(new_instance_colnames())
         div(
           column(
             6,
@@ -713,7 +710,7 @@ server <- function(input, output, session) {
       })
       prep_instance_data <- reactive({
         sel_list <- c(
-          identifier = safe_name(input$new_instance_identifier), 
+          identifier = safe_name(input$new_instance_identifier),
           url = safe_name(input$new_instance_url),
           username = safe_name(input$new_instance_username),
           password = safe_name(input$new_instance_password)
@@ -764,18 +761,18 @@ server <- function(input, output, session) {
         }
         removeModal()
       })
-      
+
       observeEvent(input$force_refresh, {
         refresh(refresh() + 1)
       })
-        
+
   }
-  
+
   # other helpers ---------------------------------
   observeEvent(input$admin_back_to_app, {
     state(0);
   })
 }
 
-# Run the application 
+# Run the application
 shinyApp(ui = ui, server = server)
