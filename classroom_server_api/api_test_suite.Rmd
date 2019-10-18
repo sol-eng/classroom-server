@@ -1,0 +1,342 @@
+---
+title: "API Test Suite"
+author: "Alex Gold"
+date: "10/18/2019"
+output: html_document
+---
+
+```{r}
+library(httr)
+library(dplyr)
+
+plumb_url <- "http://127.0.0.1:7825"
+url <- function(x) glue::glue("{plumb_url}/{x}")
+num <- round(runif(1) * 10000000)
+uni <- function(x) {paste0(x, num)}
+
+to_df <- function(x) x %>% httr::content() %>% bind_rows()
+```
+
+# Test Classrooms
+### Create Classroom
+Test normal
+```{r}
+res <- httr::POST(url("class"), 
+                   body = list(name = uni("my_class"), 
+                               password = uni("test_pass"), 
+                               description = "A test classroom."), 
+                   encode = "json") %>%
+   to_df()
+
+stopifnot(res$name == uni("my_class"))
+stopifnot(res$password == uni("test_pass"))
+```
+
+Dupe name/password
+```{r}
+# Should err b/c names and passwords need to be unique
+res <- httr::POST(url("class"), 
+                   body = list(name = uni("my_class"), 
+                               password = uni("test_pass"), 
+                               description = "A test classroom."), 
+                   encode = "json")
+
+stopifnot(res$status_code == 400)
+stopifnot(stringr::str_detect(content(res), "unique"))
+```
+
+No Description
+```{r}
+# Should work without providing description
+res <- httr::POST(url("class"), 
+                   body = list(name = uni("my_class2"), 
+                               password = uni("test_pass2")), 
+                   encode = "json") %>%
+  to_df()
+
+stopifnot(res$description == "")
+```
+ 
+### Get Classroom
+```{r}
+res <- httr::GET(url("class")) %>%
+  to_df()
+
+stopifnot(uni("my_class") %in% res$name)
+stopifnot(uni("my_class2") %in% res$name)
+```
+
+## Attributes
+### GET
+```{r}
+id <- filter(res, name == uni("my_class")) %>% pull(classroomid)
+
+attr1 <- httr::GET(url("class_attr"), 
+                   query = list(class_id = id, 
+                               attr = "name"), 
+                   encode = 'json') %>%
+  content()
+```
+
+```{r}
+stopifnot(attr1[[1]]$name == uni("my_class"))
+```
+
+
+### Change
+```{r}
+attr_ch <- httr::POST(url("class_attr"), 
+                      query = list(class_id = id, 
+                                  attr = "name", 
+                                  value = uni("my_class_update"))) %>%
+  to_df()
+```
+
+```{r}
+stopifnot(attr_ch$name == uni("my_class_update"))
+```
+
+
+### Archive
+```{r}
+arch <- httr::POST(url("class_attr"), 
+                      query = list(class_id = id, 
+                                  attr = "status", 
+                                  value = "ARCHIVE")) %>%
+  to_df()
+
+stopifnot(arch$name %>% stringr::str_detect("^ARCHIVE"))
+stopifnot(arch$description %>% stringr::str_detect("^ARCHIVE"))
+stopifnot(arch$password %>% stringr::str_detect("^ARCHIVE"))
+stopifnot(arch$status %>% stringr::str_detect("^ARCHIVE"))
+
+# Error
+reactiv <- httr::POST(url("class_attr"), 
+                      query = list(class_id = id, 
+                                  attr = "status", 
+                                  value = "ACTIVE")) %>% 
+  content()
+
+stopifnot(stringr::str_detect(reactiv, "Cannot reactivate"))
+```
+
+# Students
+New classroom
+```{r}
+class_id <- httr::POST(url("class"), 
+                   body = list(name = uni("student_test_class"), 
+                               password = uni("student_test_pass"), 
+                               description = "Tester for student creation"), 
+                   encode = "json") %>%
+   to_df() %>% 
+  pull(classroomid)
+```
+
+## Create
+```{r}
+res <- httr::POST(url("student"), 
+                   body = list(name = "Anakin Skywalker", 
+                               email = "lightside@jedi.org", 
+                               class_id = class_id), 
+                   encode = "json") %>%
+   to_df()
+```
+
+```{r}
+stopifnot(res$name == "Anakin Skywalker")
+stopifnot(res$email == "lightside@jedi.org")
+```
+
+## Get
+```{r}
+res <- httr::GET(url("student")) %>% 
+  to_df()
+
+stopifnot(is.data.frame(res))
+```
+
+```{r}
+res <- httr::GET(url('student'), 
+                 query = list(class_id = class_id)) %>%
+  to_df()
+student_id <- res$studentid
+
+stopifnot(res$name == "Anakin Skywalker")
+```
+
+## Get Attribute
+```{r}
+res <- httr::GET(url("student_attr"), 
+                 query = list(attr = "name", 
+                              class_id = class_id, 
+                              student_id = student_id)) %>% 
+  to_df()
+stopifnot(res$name == "Anakin Skywalker")
+```
+
+## Set Attribute
+```{r}
+res <- httr::POST(url("student_attr"), 
+                  body = list(attr = "name", 
+                              class_id = class_id, 
+                              student_id = student_id, 
+                              value = "Darth Vader"), 
+                  encode = 'json') %>%
+  to_df() 
+stopifnot(res$name == "Darth Vader")
+```
+
+# Instances
+## Create
+```{r}
+res <- httr::POST(url("instance"), 
+                  body = list(class_id = class_id, 
+                              identifier = uni("inst"), 
+                              url = paste(uni("http://"), ".com"), 
+                              username = "inst_user", 
+                              password = "inst_pass"), 
+                  encode = 'json') %>%
+  to_df()
+stopifnot(res$url == paste(uni("http://"), ".com"))
+```
+
+## URL Checking
+Should err
+```{r}
+res <- httr::POST(url("instance"), 
+                  body = list(class_id = class_id, 
+                              identifier = "inst1", 
+                              url = "h://instance.com", 
+                              username = "inst_user", 
+                              password = "inst_pass"), 
+                  encode = 'json') %>%
+  content()
+
+stopifnot("error" %in% names(res))
+```
+
+## Get
+```{r}
+res <- httr::GET(url("instance"), 
+                 query = list(class_id = class_id)) %>%
+  to_df()
+stopifnot(res$url == paste(uni("http://"), ".com"))
+instance_id <- res$instanceid
+```
+
+## Get Attribute
+```{r}
+res <- httr::GET(url("instance_attr"), 
+                 query = list(class_id = class_id, 
+                              instance_id = instance_id, 
+                              attr = "url")) %>%
+  to_df()
+stopifnot(res$url == paste(uni("http://"), ".com"))
+```
+
+## Set Attribute
+```{r}
+res <- httr::POST(url("instance_attr"), 
+                 body = list(class_id = class_id, 
+                              instance_id = instance_id, 
+                              attr = "url", 
+                             value = paste(uni("http://redo"), ".com")), 
+                 encode = "json") %>%
+  to_df()
+stopifnot(res$url == paste(uni("http://redo"), ".com"))
+```
+
+### Invalid URL
+Should err
+```{r}
+res <- httr::POST(url("instance_attr"), 
+                 body = list(class_id = class_id, 
+                              instance_id = instance_id, 
+                              attr = "url", 
+                             value = "httadsfp://notaninstance.com"), 
+                 encode = "json") %>% 
+  content()
+stopifnot(res$error == "URL malformed.")
+```
+
+## Claim Instance
+
+```{r}
+# No instance id
+res <- httr::POST(url("claim_instance"), 
+                  body = list(class_id = class_id, 
+                              student_id = student_id), 
+                  encode = "json") %>% 
+  to_df()
+stopifnot(res$classroomid == class_id)
+stopifnot(res$studentid == student_id)
+stopifnot(is.numeric(res$instanceid))
+
+# With instance id
+instance_id <- httr::POST(url("instance"), 
+                  body = list(class_id = class_id, 
+                              identifier = uni("inst_new"), 
+                              url = paste(uni("http://inst_new"), ".com"), 
+                              username = "inst_user", 
+                              password = "inst_pass"), 
+                  encode = 'json') %>%
+  to_df() %>%
+  pull(instanceid)
+
+student_id <- httr::POST(url("student"), 
+                   body = list(name = "Luke Skywalker", 
+                               email = "reallylightside@jedi.org", 
+                               class_id = class_id), 
+                   encode = "json") %>%
+   to_df() %>%
+  pull(studentid)
+res <- httr::POST(url("claim_instance"), 
+                  body = list(class_id = class_id, 
+                              student_id = student_id, 
+                              instance_id = instance_id), 
+                  encode = "json") %>% 
+  to_df()
+stopifnot(res$classroomid == class_id)
+stopifnot(res$instanceid == instance_id)
+stopifnot(res$studentid == student_id)
+```
+
+## Check Student-Instance mapping
+```{r}
+res <- httr::GET(url("student_instances"), 
+                 query = list(class_id = class_id), 
+                 encode = "json") %>%
+  to_df()
+test <- res %>% filter(instance_identifier == uni("inst_new"))
+stopifnot(test$class_name == uni("student_test_class"))
+stopifnot(test$student_name == "Luke Skywalker")
+```
+
+# Events
+## Add
+```{r}
+res <- httr::POST(url("event"), 
+                  body = list(event = "Big fight", 
+                              session = 123), 
+                  encode = "json") %>%
+  to_df()
+event_id <- res$eventid
+```
+
+## GET
+```{r}
+res <- httr::GET(url("event")) %>%
+  to_df()
+stopifnot("Big fight" %in% res$event)
+```
+
+## Event Attr
+```{r}
+res <- httr::GET(url("event_attr"), 
+                 query = list(attr = "event", 
+                              event_id = event_id)) %>%
+  to_df()
+stopifnot(res$event == "Big fight")
+```
+
+
