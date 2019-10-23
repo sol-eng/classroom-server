@@ -1,11 +1,10 @@
+# source("classroom_server_api/helper_funcs.R")
 source(here::here("classroom_server_api/helper_funcs.R"))
 
-# TODO: disallow interacting with archived classroom? (Or do on app side?)
-
 # Do some config/connect to DB
-cfg <- config::get("database", file = "config.yml")
-con <<- do.call(pool::dbPool, cfg)
-prefix <<- "v1_"
+cfg <- config::get(file = "config.yml")
+con <- do.call(pool::dbPool, cfg)
+prefix <- "v1_"
 schema <- "classroom"
 dbExecute(con, glue::glue("SET search_path={schema};"))
 
@@ -22,11 +21,12 @@ instance <- tbl(con, class_table("instance"))
 #* @get /class
 #* @param include_archive include archived classes? Defaults to FALSE
 function(include_archive = FALSE) {
-  status_include <- "ACTIVE"
-  if (include_archive) status_include <- c("ACTIVE", "ARCHIVE")
+  df <- get("classroom") 
   
-  get("classroom") %>%
-    filter(status %in% status_include)
+  if (!include_archive) df <- df %>%
+      dplyr::filter(!status %in% "ARCHIVE")
+  
+  df
 }
 
 #* Create a classroom
@@ -203,6 +203,44 @@ function(res, class_id, identifier, url, username, password) {
                 password = password)
 }
 
+#* Add instances
+#* @param class_id vector of classroom id
+#* @param identifier vector of instance identifiers
+#* @param url vector of instance URLs
+#* @param username vector of instance usernames
+#* @param password vector of instance passwords
+#* @post /instances
+function(res, class_id, identifier, url, username, password) {
+  class_id <- as.numeric(class_id)
+  
+  err <- tryCatch({
+    new_instances <- tibble::tibble(class_id = class_id, 
+                                identifier = identifier, 
+                                url = url, 
+                                uername = username, 
+                                password = password)
+    attr_exists("classroom", "id", classroomid = class_id[1])
+    lappy(url, check_url)
+  }, error = function(e) {
+    res$status <- 400
+    handle_err(e)
+  })
+  
+  # Filter out existing instances
+  new_instances <- new_instances %>%
+    dplyr::anti_join(new_instances %>% 
+                       select(class_id, identifier)) 
+
+  purrr::pmap(df, function(...){
+    create_object("instance",
+                  classroomid = class_id,
+                  identifier = identifier,
+                  url = url,
+                  username = username,
+                  password = password)
+  })
+}
+
 #* Get Instance attributes
 #* @param class_id classroom id
 #* @param instance_id instance id
@@ -297,7 +335,7 @@ function(res, class_id, student_id, instance_id = NULL) {
 #* Get students and instance details for a classroom
 #* @param class_id class id
 #* @get /student_instances
-function(class_id) {
+function(class_id = NULL) {
   tbl(con, class_table('claim')) %>%
     select(classroomid,
            studentid,
@@ -324,7 +362,7 @@ function(class_id) {
              student_name = name,
              student_email = email)) %>%
     select(-ends_with("id")) %>%
-  collect()
+    collect()
 }
 
 # Events -----

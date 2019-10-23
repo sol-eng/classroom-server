@@ -3,6 +3,7 @@ library(plumber)
 library(dplyr)
 library(DBI)
 library(magrittr)
+library(odbc)
 
 # Table Access ------
 
@@ -188,12 +189,13 @@ is_claimed <- function(instance_id) {
 }
 
 archive_class <- function(class_id) {
+  date <- Sys.time() %>% format("%Y%m%d_%H%M%S")
   query <- glue::glue(
     "UPDATE {class_table('classroom')}
       SET 
-        name = concat('ARCHIVED {Sys.Date()}', name),
-        password = concat('ARCHIVED {Sys.Date()}', password), 
-        description = concat('ARCHIVED {Sys.Date()}', description)
+        name = concat('ARCHIVED {date}', name),
+        password = concat('ARCHIVED {date}', password), 
+        description = concat('ARCHIVED {date}', description)
       WHERE classroomid = {class_id};"
   )
   
