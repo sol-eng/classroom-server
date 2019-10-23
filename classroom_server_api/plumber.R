@@ -20,8 +20,13 @@ instance <- tbl(con, class_table("instance"))
 
 #* Get list of classrooms
 #* @get /class
-function() {
-  get("classroom")
+#* @param include_archive include archived classes? Defaults to FALSE
+function(include_archive = FALSE) {
+  status_include <- "ACTIVE"
+  if (include_archive) status_include <- c("ACTIVE", "ARCHIVE")
+  
+  get("classroom") %>%
+    filter(status %in% status_include)
 }
 
 #* Create a classroom
