@@ -1,7 +1,7 @@
     # helpful functions ------------------------
     
     protect_empty <- function(input, out_obj="null"){
-        if (input %in% c("''", "") || is.na(input) || 
+        if (input %in% c("''", "", '""') || is.na(input) || 
             is.null(input) || length(input) == 0) {
             return(out_obj)
         } else {
