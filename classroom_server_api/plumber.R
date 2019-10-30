@@ -48,7 +48,7 @@ function(res, name, password, class_guid, description = '') {
   create_object("classroom", 
                 name = name, 
                 password = password, 
-                description = description
+                description = description,
                 class_guid = class_guid)
 }
 
@@ -218,10 +218,10 @@ function(res, class_id, identifier, url, username, password) {
   
   err <- tryCatch({
     new_instances <- tibble::tibble(class_id = class_id, 
-                                identifier = identifier, 
-                                url = url, 
-                                uername = username, 
-                                password = password)
+                                    identifier = identifier, 
+                                    url = url, 
+                                    username = username, 
+                                    password = password)
     attr_exists("classroom", "id", classroomid = class_id[1])
     lappy(url, check_url)
   }, error = function(e) {
@@ -230,17 +230,20 @@ function(res, class_id, identifier, url, username, password) {
   })
   
   # Filter out existing instances
+  old_instances <- get('instance')
   new_instances <- new_instances %>%
-    dplyr::anti_join(new_instances %>% 
+    dplyr::anti_join(old_instances %>% 
                        select(class_id, identifier)) 
-
-  purrr::pmap(df, function(...){
+  
+  purrr::pmap(new_instances, function(...){
+    args <- list(...)
+    print(args)
     create_object("instance",
-                  classroomid = class_id,
-                  identifier = identifier,
-                  url = url,
-                  username = username,
-                  password = password)
+                  classroomid = args$class_id,
+                  identifier = args$identifier,
+                  url = args$url,
+                  username = args$username,
+                  password = args$password)
   })
 }
 
@@ -427,5 +430,3 @@ function(res, event_id, attr) {
   
   get_attr("event", attr, eventid = event_id)
 }
-
-# Intentionally excluding /event_attr post -- shouldn't be able to update once created.
