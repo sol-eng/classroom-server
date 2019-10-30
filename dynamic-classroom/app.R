@@ -746,7 +746,6 @@ server <- function(input, output, session) {
           name = input$new_class_name,
           password = input$new_class_password,
           status = "ACTIVE",
-          class_guid = uuid::UUIDgenerate(),
           description = input$new_class_description
         )
         if (nrow(new_class) > 0) {
