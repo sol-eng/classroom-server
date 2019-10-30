@@ -12,7 +12,8 @@ create_table_classroom <- function(schema, prefix){
     description text,
     password text NOT NULL UNIQUE,
     status text NOT NULL DEFAULT 'CREATED',
-    claim_per_student integer NOT NULL DEFAULT 1
+    claim_per_student integer NOT NULL DEFAULT 1,
+    class_guid text NOT NULL UNIQUE
     );")
 }
 
