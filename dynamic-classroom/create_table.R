@@ -193,4 +193,4 @@ create_all <- function(con, schema, prefix) {
 
 }
 
-# add_classroom(con, "classroom", "test", "Test Classroom 1", "somepass", "ACTIVE")
+# add_classroom(con, "classroom", "test", "Test Classroom 1", "somepass", "ACTIVE", uuid::UUIDgenerate())
