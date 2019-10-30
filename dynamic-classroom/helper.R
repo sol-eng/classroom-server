@@ -8,7 +8,7 @@
             return(input)
         }
     }
-    add_classroom <- function(con, schema, prefix, name, password, status, class_guid, description = NULL) {
+    add_classroom <- function(con, schema, prefix, name, password, status, description = NULL, class_guid = uuid::UUIDgenerate()) {
         description <- description %>% glue::single_quote() %>% protect_empty()
         dbGetQuery(con, glue::glue(
             "INSERT INTO {schema}.{prefix}classroom
