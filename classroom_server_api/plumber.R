@@ -3,8 +3,8 @@ source(here::here("classroom_server_api/helper_funcs.R"))
 
 # Do some config/connect to DB
 cfg <- config::get(file = "config.yml")
-con <- do.call(pool::dbPool, cfg)
-prefix <- "v1_"
+con <<- do.call(pool::dbPool, cfg)
+prefix <<- "v1_"
 schema <- "classroom"
 dbExecute(con, glue::glue("SET search_path={schema};"))
 
@@ -33,6 +33,7 @@ function(include_archive = FALSE) {
 #* @param name name of classroom
 #* @param password classroom password
 #* @param description classroom description, defaults to NULL
+#* @param class_guid guid of classroom (from main API)
 #* @post /class
 function(res, name, password, class_guid, description = '') {
   classrooms <- get("classroom")
