@@ -1,5 +1,5 @@
 # source("classroom_server_api/helper_funcs.R")
-source(here::here("classroom_server_api/helper_funcs.R"))
+source("helper_funcs.R")
 
 # Do some config/connect to DB
 cfg <- config::get(file = "config.yml")
