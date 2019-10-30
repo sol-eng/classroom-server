@@ -15,7 +15,7 @@ cfg <- config::get("database", file = "config.yml")
 con <- do.call(pool::dbPool, cfg)
 schema <- "classroom"
 prefix <- "v1_"
-# add_classroom(con, schema = schema, prefix = prefix, "SPGlobal Workshop", "spglobal", "ACTIVE")
+# add_classroom(con, schema = schema, prefix = prefix, "SPGlobal Workshop", "spglobal", "ACTIVE", uuid::UUIDgenerate())
 
 library(tidyverse)
 library(readxl)
