@@ -34,11 +34,13 @@ function(include_archive = FALSE) {
 #* @param password classroom password
 #* @param description classroom description, defaults to NULL
 #* @post /class
-function(res, name, password, description = '') {
+function(res, name, password, class_guid, description = '') {
   classrooms <- get("classroom")
   
-  if (name %in% classrooms$name || password %in% classrooms$password) {
-    msg <- "Classroom names and passwords must be unique. Yours is not."
+  if (name %in% classrooms$name || 
+      password %in% classrooms$password ||
+      class_guid %in% classrooms$class_guid) {
+    msg <- "Classroom names, guids, and passwords must be unique. Yours is not."
     res$status <- 400
     return(list(error = jsonlite::unbox(msg)))
   }
@@ -46,7 +48,8 @@ function(res, name, password, description = '') {
   create_object("classroom", 
                 name = name, 
                 password = password, 
-                description = description)
+                description = description
+                class_guid = class_guid)
 }
 
 #* Get a classroom attribute
