@@ -3,11 +3,11 @@ title: dynamic-classroom
 username: cole
 account: cole
 server: colorado.rstudio.com
-hostUrl: http://colorado.rstudio.com:3939/__api__
+hostUrl: https://colorado.rstudio.com/rsc/__api__
 appId: 1405
-bundleId: 24741
-url: http://colorado.rstudio.com:3939/classroom-assignment/
-when: 1547532427.60347
+bundleId: 33497
+url: https://colorado.rstudio.com/rsc/classroom-assignment/
+when: 1579389387.26699
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: add_instances_20180913.html|add_instances_pass.html|add_instances.html|add_instances.Rmd|adhoc.R|attendees_v10.xlsx|create_table.R|profile-time.Rprofvis|profiling.Rprofvis|spglobal-final-1.csv|spglobal-final-2.csv|user_parse_20180913.html|user_parse.Rmd
+ignoredFiles: 201906_output_students.rds|add_instances_20180913.html|add_instances_pass.html|add_instances.html|add_instances.Rmd|adhoc.R|attendees_v10.xlsx|create_table.R|output_students.rds|profile-time.Rprofvis|profiling.Rprofvis|spglobal-final-1.csv|spglobal-final-2.csv|user_parse_20180913.html|user_parse.Rmd
