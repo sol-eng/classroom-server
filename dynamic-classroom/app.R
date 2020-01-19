@@ -424,14 +424,14 @@ server <- function(input, output, session) {
     claim_id <- student_claim %>% pull(instanceid)
 
     if (length(claim_id) == 0) {
+      # clear cookie when no classroom found
+      # TODO: Find a way to _keep_ the cookie, but still allow reclaiming
+      # that way the user does not have to login again...
+      removeCookie(glue("classroom{active_class()}"))
       log_event(con = con, schema = schema, prefix = prefix, event = "WARNING: No server found",
                 session = session$token, classroomid = active_class(), studentid = active_student()
                 , cookie = active_cookie())
     }
-    # clear cookie when no classroom found
-    # TODO: Find a way to _keep_ the cookie, but still allow reclaiming
-    # that way the user does not have to login again...
-    removeCookie(glue("classroom{active_class()}"))
     validate(need(length(claim_id) > 0,
                   message = "I'm sorry. No server is available at present. We will fix this as soon as we can!!",
                   "no_server"
