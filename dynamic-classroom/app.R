@@ -122,7 +122,7 @@ server <- function(input, output, session) {
   # check that password matches a classroom
   observeEvent(input$submit_0, {
     if (input$text_0 %in% (classroom %>% pull(password))) {
-      selected_record <- classroom %>% filter(password == input$text_0)
+      selected_record <- classroom %>% filter(password == !!input$text_0)
       if (selected_record %>% tally() %>% pull(n) == 0) {
         # this should not happen
         warning("Strange state where password matched but did not get a record")
