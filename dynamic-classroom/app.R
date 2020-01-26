@@ -122,7 +122,7 @@ server <- function(input, output, session) {
   # check that password matches a classroom
   observeEvent(input$submit_0, {
     if (input$text_0 %in% (classroom %>% pull(password))) {
-      selected_record <- classroom %>% filter(password == input$text_0)
+      selected_record <- classroom %>% filter(password == !!input$text_0)
       if (selected_record %>% tally() %>% pull(n) == 0) {
         # this should not happen
         warning("Strange state where password matched but did not get a record")
@@ -424,6 +424,10 @@ server <- function(input, output, session) {
     claim_id <- student_claim %>% pull(instanceid)
 
     if (length(claim_id) == 0) {
+      # clear cookie when no classroom found
+      # TODO: Find a way to _keep_ the cookie, but still allow reclaiming
+      # that way the user does not have to login again...
+      removeCookie(glue("classroom{active_class()}"))
       log_event(con = con, schema = schema, prefix = prefix, event = "WARNING: No server found",
                 session = session$token, classroomid = active_class(), studentid = active_student()
                 , cookie = active_cookie())
