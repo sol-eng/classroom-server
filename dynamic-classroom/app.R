@@ -226,7 +226,7 @@ server <- function(input, output, session) {
     email_regex <- "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)"
     if (is.null(input$email_1) || !stringr::str_detect(input$email_1, email_regex)) {
       showNotification(
-        "Invalid 'EMAIL' input. Please try again!", 
+        "Invalid 'Email' input. Please try again!", 
         type = "error"
       )
     } else {
