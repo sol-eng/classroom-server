@@ -221,120 +221,43 @@ server <- function(input, output, session) {
               other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
     )
     
-    input_email <- input$email_1 %>% 
-      stringr::str_to_lower() %>%
-      stringr::str_trim()
-    # lookup of the current student by email
-    classid <- as.integer(active_class())
-    curr_student <- student %>%
-      filter(classroomid == classid, tolower(email) == input_email)
-
-    if (curr_student %>% tally() %>% pull(n) > 0 &&
-        curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) > 0
-    ) {
-      # found student and claim
-
-      active_student(curr_student %>% pull(studentid))
-
-      log_event(con, schema, prefix, event = "Found student",
-                session = session$token,
-                classroomid = active_class(), studentid = active_student(),
-                cookie = active_cookie())
-      set_student_consent(con = con, schema = schema
-                          , prefix = prefix
-                          , student = active_student()
-                          , consent = "true")
-      set_student_name(con = con, schema = schema
-                       , prefix = prefix
-                       , studentid = active_student()
-                       , name = input$name_1)
-
-      # set cookie
-      if (is.null(input$cookie[[glue("classroom{active_class()}")]])) {
-        active_cookie(UUIDgenerate())
-        updateCookie(session,
-                     !!!as.list(set_names(active_cookie(), glue("classroom{active_class()}")))
-        )
-        set_student_cookie(con, schema = schema, prefix = prefix
-                           , studentid = active_student()
-                           , cookie = active_cookie())
-        log_event(con = con, schema = schema, prefix = prefix, event = "Set cookie"
-                  , session = session$token
-                  , classroomid = active_class()
-                  , studentid = active_student()
-                  , cookie = active_cookie()
-        )
-      } else {
-        active_cookie(input$cookie[[glue("classroom{active_class()}")]])
-        log_event(con = con, schema = schema, prefix = prefix, event = "Cookie already exists"
-                  , session = session$token
-                  , classroomid = active_class()
-                  , studentid = active_student()
-                  , cookie = active_cookie()
-        )
-        set_student_cookie(con, schema = schema, prefix = prefix
-                           , studentid = active_student()
-                           , cookie = active_cookie())
-      }
-
-      state(2)
-    } else if (
-      input$here_before_1 ||
-      (curr_student %>% tally() %>% pull(n) > 0 &&
-       curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) == 0
+    # validate that email input is actually valid
+    # thanks to: https://emailregex.com/
+    email_regex <- "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)"
+    if (is.null(input$email_1) || !stringr::str_detect(input$email_1, email_regex)) {
+      showNotification(
+        "Invalid 'EMAIL' input. Please try again!", 
+        type = "error"
       )
-    ) {
-      # did not find student/instance, new student
-      class_status <- classroom %>% filter(classroomid == classid) %>% pull(status)
-      if (class_status != "ACTIVE") {
-        # new students not welcome...
-        log_event(
-          con, schema, prefix,
-          glue::glue("WARNING: Tried to claim new instance with classroom state: {class_status}"),
-          session=session$token,
-          classroomid = active_class(),
-          cookie = active_cookie(),
-          other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
-        )
-        showNotification(
-          "Sorry, new instances are not available at this time. Please contact your TA",
-          type = "error"
-        )
-      } else {
-        # welcome, new student!
-        log_event(
-          con, schema, prefix,
-          "Add student and Claim instance",
-          session=session$token,
-          classroomid = active_class(),
-          cookie = active_cookie(),
-          other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
-        )
-        if (curr_student %>% tally() %>% pull(n) == 0) {
-          # add student record
-          new_student <- add_student(
-            con = con, schema = schema, prefix = prefix, classroomid = classid,
-            email = input$email_1, name = input$name_1
-          )
-          active_student(new_student %>% pull(studentid))
-        } else {
-          # existing student
-          active_student(curr_student %>% pull(studentid))
-
-          log_event(con, schema, prefix, event = "Found student",
-                    session = session$token,
-                    classroomid = active_class(), studentid = active_student(),
-                    cookie = active_cookie())
-          set_student_name(con = con, schema = schema
-                           , prefix = prefix
-                           , studentid = active_student()
-                           , name = input$name_1)
-        }
+    } else {
+      input_email <- input$email_1 %>% 
+        stringr::str_to_lower() %>%
+        stringr::str_trim()
+      # lookup of the current student by email
+      classid <- as.integer(active_class())
+      curr_student <- student %>%
+        filter(classroomid == classid, tolower(email) == input_email)
+  
+      if (curr_student %>% tally() %>% pull(n) > 0 &&
+          curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) > 0
+      ) {
+        # found student and claim
+  
+        active_student(curr_student %>% pull(studentid))
+  
+        log_event(con, schema, prefix, event = "Found student",
+                  session = session$token,
+                  classroomid = active_class(), studentid = active_student(),
+                  cookie = active_cookie())
         set_student_consent(con = con, schema = schema
                             , prefix = prefix
                             , student = active_student()
                             , consent = "true")
-
+        set_student_name(con = con, schema = schema
+                         , prefix = prefix
+                         , studentid = active_student()
+                         , name = input$name_1)
+  
         # set cookie
         if (is.null(input$cookie[[glue("classroom{active_class()}")]])) {
           active_cookie(UUIDgenerate())
@@ -362,52 +285,141 @@ server <- function(input, output, session) {
                              , studentid = active_student()
                              , cookie = active_cookie())
         }
-
-        # claim available instance
-        claim_instance <- add_claim(
-          con = con,
-          schema = schema,
-          prefix = prefix,
-          classroomid = active_class(),
-          studentid = active_student()
+  
+        state(2)
+      } else if (
+        input$here_before_1 ||
+        (curr_student %>% tally() %>% pull(n) > 0 &&
+         curr_student %>% inner_join(claim, by = c("studentid","classroomid")) %>% tally() %>% pull(n) == 0
         )
-        if (claim_instance %>% tally() %>% pull(n) == 1) {
-          # successful claim
-          log_event(con, schema, prefix, event = "Successful instance claim",
-                    session = session$token,
-                    classroomid = active_class(), studentid = active_student(),
-                    instanceid = claim_instance %>% pull(instanceid),
-                    cookie = active_cookie())
-
-          state(2)
-        } else {
-          # unsuccessful claim
-          log_event(con, schema, prefix, event = "WARNING: Failed to claim instance",
-                    session = session$token,
-                    classroomid = active_class(), studentid = active_student(),
-                    cookie = active_cookie())
-
+      ) {
+        # did not find student/instance, new student
+        class_status <- classroom %>% filter(classroomid == classid) %>% pull(status)
+        if (class_status != "ACTIVE") {
+          # new students not welcome...
+          log_event(
+            con, schema, prefix,
+            glue::glue("WARNING: Tried to claim new instance with classroom state: {class_status}"),
+            session=session$token,
+            classroomid = active_class(),
+            cookie = active_cookie(),
+            other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
+          )
           showNotification(
-            "Sorry, an instance is not available at this time. Please contact your TA.",
+            "Sorry, new instances are not available at this time. Please contact your TA",
             type = "error"
           )
+        } else {
+          # welcome, new student!
+          log_event(
+            con, schema, prefix,
+            "Add student and Claim instance",
+            session=session$token,
+            classroomid = active_class(),
+            cookie = active_cookie(),
+            other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
+          )
+          if (curr_student %>% tally() %>% pull(n) == 0) {
+            # add student record
+            new_student <- add_student(
+              con = con, schema = schema, prefix = prefix, classroomid = classid,
+              email = input$email_1, name = input$name_1
+            )
+            active_student(new_student %>% pull(studentid))
+          } else {
+            # existing student
+            active_student(curr_student %>% pull(studentid))
+  
+            log_event(con, schema, prefix, event = "Found student",
+                      session = session$token,
+                      classroomid = active_class(), studentid = active_student(),
+                      cookie = active_cookie())
+            set_student_name(con = con, schema = schema
+                             , prefix = prefix
+                             , studentid = active_student()
+                             , name = input$name_1)
+          }
+          set_student_consent(con = con, schema = schema
+                              , prefix = prefix
+                              , student = active_student()
+                              , consent = "true")
+  
+          # set cookie
+          if (is.null(input$cookie[[glue("classroom{active_class()}")]])) {
+            active_cookie(UUIDgenerate())
+            updateCookie(session,
+                         !!!as.list(set_names(active_cookie(), glue("classroom{active_class()}")))
+            )
+            set_student_cookie(con, schema = schema, prefix = prefix
+                               , studentid = active_student()
+                               , cookie = active_cookie())
+            log_event(con = con, schema = schema, prefix = prefix, event = "Set cookie"
+                      , session = session$token
+                      , classroomid = active_class()
+                      , studentid = active_student()
+                      , cookie = active_cookie()
+            )
+          } else {
+            active_cookie(input$cookie[[glue("classroom{active_class()}")]])
+            log_event(con = con, schema = schema, prefix = prefix, event = "Cookie already exists"
+                      , session = session$token
+                      , classroomid = active_class()
+                      , studentid = active_student()
+                      , cookie = active_cookie()
+            )
+            set_student_cookie(con, schema = schema, prefix = prefix
+                               , studentid = active_student()
+                               , cookie = active_cookie())
+          }
+  
+          # claim available instance
+          claim_instance <- add_claim(
+            con = con,
+            schema = schema,
+            prefix = prefix,
+            classroomid = active_class(),
+            studentid = active_student()
+          )
+          if (claim_instance %>% tally() %>% pull(n) == 1) {
+            # successful claim
+            log_event(con, schema, prefix, event = "Successful instance claim",
+                      session = session$token,
+                      classroomid = active_class(), studentid = active_student(),
+                      instanceid = claim_instance %>% pull(instanceid),
+                      cookie = active_cookie())
+  
+            state(2)
+          } else {
+            # unsuccessful claim
+            log_event(con, schema, prefix, event = "WARNING: Failed to claim instance",
+                      session = session$token,
+                      classroomid = active_class(), studentid = active_student(),
+                      cookie = active_cookie())
+  
+            showNotification(
+              "Sorry, an instance is not available at this time. Please contact your TA.",
+              type = "error"
+            )
+          }
         }
+      } else {
+        # did not find student, and is a returning user
+        log_event(con, schema, prefix, "WARNING: User not found!!",
+                  session = session$token,
+                  classroomid = active_class(),
+                  cookie = active_cookie(),
+                  other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
+        )
+        showNotification(
+          "Sorry, your email was not found in the classroom.
+                  Please double check spelling and try again. Otherwise,
+                  you can contact a TA for assistance."
+          , type = "error"
+        )
       }
-    } else {
-      # did not find student, and is a returning user
-      log_event(con, schema, prefix, "WARNING: User not found!!",
-                session = session$token,
-                classroomid = active_class(),
-                cookie = active_cookie(),
-                other = glue::glue("Name: {input$name_1}; Email: {input$email_1}")
-      )
-      showNotification(
-        "Sorry, your email was not found in the classroom.
-                Please double check spelling and try again. Otherwise,
-                you can contact a TA for assistance."
-        , type = "error"
-      )
+      
     }
+    
   })
 
   # state = 2 : Classroom information  --------------------------
