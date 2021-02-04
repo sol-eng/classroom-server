@@ -216,7 +216,7 @@ function(res, class_id, identifier, url, username, password) {
 #* @post /instances
 function(res, class_id, identifier, url, username, password) {
   class_id <- as.numeric(class_id)
-  
+  message(glue::glue("Patching instances for {class_id}"))
   err <- tryCatch({
     new_instances <- tibble::tibble(class_id = class_id, 
                                     identifier = identifier, 
@@ -224,18 +224,22 @@ function(res, class_id, identifier, url, username, password) {
                                     username = username, 
                                     password = password)
     attr_exists("classroom", "id", classroomid = class_id[1])
-    lappy(url, check_url)
+    lapply(url, check_url)
   }, error = function(e) {
     res$status <- 400
+    message(e)
     handle_err(e)
   })
   
+  message(glue::glue("Got {nrow(new_instances)} new instances"))
+  
   # Filter out existing instances
-  old_instances <- get('instance')
+  old_instances <- get('instance') %>% as_tibble()
   new_instances <- new_instances %>%
     dplyr::anti_join(old_instances %>% 
-                       select(class_id, identifier)) 
+                       select(class_id = classroomid, identifier)) 
   
+  message(glue::glue("Got {nrow(new_instances)} (updated) new instances"))
   purrr::pmap(new_instances, function(...){
     args <- list(...)
     print(args)
