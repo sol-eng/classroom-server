@@ -198,17 +198,20 @@
   }
     
 is_admin <- function(user) {
-  (!is.null(user) && 
+  nchar(Sys.getenv("CLASSROOM_DISABLE_ADMIN") == 0) &&
     (
-      stringr::str_detect(user, "^.*@rstudio.com$") || 
-        user == "cole" ||
-        user %in% (
-          Sys.getenv("CLASS_ADMIN_USER") %>%
-            strsplit(split = "\\|") %>%
-            .[[1]]
-        )
-    )) ||
-    nchar(Sys.getenv("RSTUDIO_USER_IDENTITY")) > 0
+      (!is.null(user) && 
+        (
+          stringr::str_detect(user, "^.*@rstudio.com$") || 
+            user == "cole" ||
+            user %in% (
+              Sys.getenv("CLASS_ADMIN_USER") %>%
+                strsplit(split = "\\|") %>%
+                .[[1]]
+            )
+        )) ||
+      nchar(Sys.getenv("RSTUDIO_USER_IDENTITY")) > 0
+    )
 }
     
 #reprex::reprex({
