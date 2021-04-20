@@ -11,7 +11,18 @@ library(shinyWidgets)
 
 source("helper.R")
 
-cfg <- config::get("database", file = "config.yml")
+if (Sys.getenv("R_CONFIG_ACTIVE") %in% c("rsconnect", "colorado")) {
+  cfg <- list(
+    drv = odbc::odbc(),
+    Driver = "PostgreSQL",
+    Host = Sys.getenv("CLASSROOM_DB_HOST"),
+    Database = Sys.getenv("CLASSROOM_DB_NAME"),
+    UID = Sys.getenv("CLASSROOM_DB_USER"),
+    PWD = Sys.getenv("CLASSROOM_DB_PASSWORD")
+  )
+} else {
+  cfg <- config::get("database", file = "config.yml")
+}
 con <- do.call(pool::dbPool, cfg)
 
 
