@@ -23,6 +23,8 @@ instance <- tbl(con, class_table("instance"))
 function(include_archive = FALSE) {
   df <- get("classroom") 
   
+  include_archive <- as.logical(include_archive)
+  
   if (!include_archive) df <- df %>%
       dplyr::filter(!status %in% "ARCHIVE")
   

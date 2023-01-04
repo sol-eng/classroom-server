@@ -61,7 +61,7 @@ safe_chr <- function(x) {
 
 # Check URL well-formed
 check_url <- function(x) {
-  if(!stringr::str_detect(x, "^http(s)?:\\/\\/.+.com")) {
+  if(!stringr::str_detect(x, "^http(s)?:\\/\\/.+\..+")) {
     stop("URL malformed.")
   }
   NULL
