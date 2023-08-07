@@ -1,6 +1,7 @@
 # Various Helpers for Classroom Management API
 library(plumber)
 library(dplyr)
+library(dbplyr)
 library(DBI)
 library(magrittr)
 library(odbc)

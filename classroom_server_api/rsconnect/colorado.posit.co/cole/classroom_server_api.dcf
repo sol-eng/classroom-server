@@ -1,0 +1,12 @@
+name: classroom_server_api
+title: classroom_server_api
+username: cole
+account: cole
+server: colorado.posit.co
+hostUrl: https://colorado.posit.co/rsc/__api__
+appId: 3134
+bundleId: 78166
+url: https://colorado.posit.co/rsc/classroom-server-api/
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: api_test_suite.html|api_test_suite.Rmd|cole/classroom_server_api.dcf|cole/classroom_server_api2.dcf|colorado.rstudio.com/alex.gold/classroom_server_api.dcf|tmp/config.yml|tmp/helper_funcs.R|tmp/plumber.R
