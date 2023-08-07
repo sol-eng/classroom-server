@@ -198,7 +198,7 @@
   }
     
 is_admin <- function(user) {
-  nchar(Sys.getenv("CLASSROOM_DISABLE_ADMIN") == 0) &&
+  nchar(Sys.getenv("CLASSROOM_DISABLE_ADMIN")) == 0 &&
     (
       (!is.null(user) && 
         (

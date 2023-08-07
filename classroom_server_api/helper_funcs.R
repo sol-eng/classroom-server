@@ -1,6 +1,7 @@
 # Various Helpers for Classroom Management API
 library(plumber)
 library(dplyr)
+library(dbplyr)
 library(DBI)
 library(magrittr)
 library(odbc)
@@ -61,7 +62,7 @@ safe_chr <- function(x) {
 
 # Check URL well-formed
 check_url <- function(x) {
-  if(!stringr::str_detect(x, "^http(s)?:\\/\\/.+.com")) {
+  if(!stringr::str_detect(x, "^http(s)?:\\/\\/.+\\..+")) {
     stop("URL malformed.")
   }
   NULL

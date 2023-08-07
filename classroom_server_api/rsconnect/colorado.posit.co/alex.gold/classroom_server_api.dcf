@@ -1,12 +1,12 @@
 name: classroom_server_api
 title: classroom_server_api
-username: alex.gold
-account: alex.gold
-server: colorado.rstudio.com
-hostUrl: https://colorado.rstudio.com/rsc/__api__
+username: cole
+account: cole
+server: colorado.posit.co
+hostUrl: https://colorado.posit.co/rsc/__api__
 appId: 3134
 bundleId: 30982
-url: https://colorado.rstudio.com/rsc/classroom-server-api/
+url: https://colorado.posit.co/rsc/classroom-server-api/
 when: 1572461245.48953
 asMultiple: FALSE
 asStatic: FALSE

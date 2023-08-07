@@ -13,15 +13,51 @@ class <- tbl(con, class_table("classroom"))
 student <- tbl(con, class_table("student"))
 instance <- tbl(con, class_table("instance"))
 
+allow_origin <- function(res, host) {
+  res$headers = list(
+    "Access-Control-Allow-Methods" = "GET,OPTIONS,PUT,POST,DELETE",
+    # TODO: a way to filter hosts and use the HOST header
+    "Access-Control-Allow-Origin" = host,
+    "Access-Control-Allow-Headers" = "Accept,Content-Type,Content-Length,Content-Profile,Accept-Encoding,X-CSRF-Token,Authorization,Prefer,X-Client-Info",
+    "Access-Control-Allow-Credentials" = "true"
+  )
+  return(res)
+}
+
+expected_host <- "http://localhost:3001"
+
+#* @filter cors
+cors <- function(res) {
+  maybe_host <- res$headers[["HOST"]]
+  if (is.null(maybe_host) || maybe_host == "") {
+    maybe_host <- "http://localhost:3001"
+  }
+  res$setHeader("Access-Control-Allow-Origin", expected_host)
+  res$setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PUT,POST,DELETE")
+  res$setHeader("Access-Control-Allow-Headers", "Accept,Content-Type,Content-Length,Content-Profile,Accept-Encoding,X-CSRF-Token,Authorization,Prefer,X-Client-Info")
+  res$setHeader("Access-Control-Allow-Credentials", "true")
+  plumber::forward()
+}
+
 #* @apiTitle Classroom Server API
 
 # Classrooms ------
 
+standard_options_req <- function(res) {
+  allow_origin(res, expected_host)
+  return(res)
+}
+
+#* @options /class
+standard_options_req
+
 #* Get list of classrooms
 #* @get /class
 #* @param include_archive include archived classes? Defaults to FALSE
-function(include_archive = FALSE) {
+function(res, include_archive = FALSE) {
   df <- get("classroom") 
+  
+  include_archive <- as.logical(include_archive)
   
   if (!include_archive) df <- df %>%
       dplyr::filter(!status %in% "ARCHIVE")
@@ -52,6 +88,9 @@ function(res, name, password, class_guid, description = '') {
                 description = description,
                 class_guid = class_guid)
 }
+
+#* @options /class_attr
+standard_options_req
 
 #* Get a classroom attribute
 #* @param class_id classroomid from classroom table
@@ -101,10 +140,13 @@ function(res, class_id, attr, value) {
 
 # Students -----
 
+#* @options /student
+standard_options_req
+
 #* Get student table
 #* @param class_id classroom id from class table, defaults to NULL (all classrooms)
 #* @get /student
-function(class_id = NULL) {
+function(res, class_id = NULL) {
   df <- get("student")
   
   if (!is.null(class_id)) df <- dplyr::filter(df, 
@@ -130,6 +172,9 @@ function(req, res, class_id, name, email, other = '') {
                 email = email, 
                 other = other)
 }
+
+#* @options /student_attr
+standard_options_req
 
 #* Get a student attribute
 #* @param class_id classroom id
@@ -173,10 +218,13 @@ function(res, class_id, student_id, attr, value) {
 
 # Instances ------
 
+#* @options /instance
+standard_options_req
+
 #* Get Instances
 #* @param class_id id of classroom
 #* @get /instance
-function(class_id = NULL) {
+function(res, class_id) {
   df <- get("instance")
   
   if (!is.null(class_id)) df <- dplyr::filter(df, classroomid == class_id)
@@ -191,8 +239,12 @@ function(class_id = NULL) {
 #* @param username instance username
 #* @param password instance password
 #* @post /instance
-function(res, class_id, identifier, url, username, password) {
-  class_id <- as.numeric(class_id)
+function(req, res, ...) {
+  class_id <- as.numeric(req$body$class_id)
+  identifier <- req$body$identifier
+  url <- req$body$url
+  username <- req$body$username
+  password <- req$body$password
   
   err <- check_err(res, 
                    attr_exists("classroom", "id", classroomid = class_id),
@@ -207,6 +259,9 @@ function(res, class_id, identifier, url, username, password) {
                 password = password)
 }
 
+#* @options /instances
+standard_options_req
+
 #* Add instances
 #* @param class_id vector of classroom id
 #* @param identifier vector of instance identifiers
@@ -214,8 +269,13 @@ function(res, class_id, identifier, url, username, password) {
 #* @param username vector of instance usernames
 #* @param password vector of instance passwords
 #* @post /instances
-function(res, class_id, identifier, url, username, password) {
-  class_id <- as.numeric(class_id)
+function(req, res, ...) {
+  class_id <- as.numeric(req$body$class_id)
+  identifier <- req$body$identifier
+  url <- req$body$url
+  username <- req$body$username
+  password <- req$body$password
+  
   message(glue::glue("Patching instances for {class_id}"))
   err <- tryCatch({
     new_instances <- tibble::tibble(class_id = class_id, 
@@ -226,8 +286,9 @@ function(res, class_id, identifier, url, username, password) {
     attr_exists("classroom", "id", classroomid = class_id[1])
     lapply(url, check_url)
   }, error = function(e) {
+    message("ERROR time!!")
     res$status <- 400
-    message(e)
+    message(str(e))
     handle_err(e)
   })
   
@@ -251,6 +312,9 @@ function(res, class_id, identifier, url, username, password) {
                   password = args$password)
   })
 }
+
+#* @options /instance_attr
+standard_options_req
 
 #* Get Instance attributes
 #* @param class_id classroom id
@@ -295,13 +359,15 @@ function(res, class_id, instance_id, attr, value) {
            classroomid = class_id, instanceid = instance_id)
 }
 
+#* @options /claim_instance
+standard_options_req
 
 #* Allow student to claim an instance
 #* @param class_id classroom
 #* @param student_id student
 #* @param instance_id instance, defaults to NULL (find an instance)
 #* @post /claim_instance
-function(res, class_id, student_id, instance_id = NULL) {
+function(res, class_id, student_id, instance_id) {
   class_id <- as.numeric(class_id)
   student_id <- as.numeric(student_id)
   if(!is.null(instance_id)) instance_id <- as.numeric(instance_id)
@@ -343,10 +409,13 @@ function(res, class_id, student_id, instance_id = NULL) {
   }
 }
 
+#* @options /student_instances
+standard_options_req
+
 #* Get students and instance details for a classroom
 #* @param class_id class id
 #* @get /student_instances
-function(class_id = NULL) {
+function(res, class_id) {
   tbl(con, class_table('claim')) %>%
     select(classroomid,
            studentid,
@@ -378,9 +447,12 @@ function(class_id = NULL) {
 
 # Events -----
 
+#* @options /event
+standard_options_req
+
 #* Get Events
 #* @get /event
-function() {
+function(res) {
   get("event")
 }
 
@@ -394,9 +466,8 @@ function() {
 #* @param other other
 #* @post /event
 function(res, event, session, 
-         class_id = NULL, instance_id = NULL, student_id = NULL,
-         cookie = NULL, other = NULL) {
-  
+         class_id, instance_id, student_id,
+         cookie, other) {
   tryCatch({
     if((!is.null(class_id) && !exists("classroom", classroomid = class_id)) ||
        (!is.null(instance_id) && !exists("instance", instanceid = instance_id)) ||
@@ -408,6 +479,7 @@ function(res, event, session,
     res$status <- 400
     return(handle_err(e))
   })
+  
   
   args <- list(
     which = "event", 
@@ -423,6 +495,9 @@ function(res, event, session,
   
   do.call(create_object, args)
 }
+
+#* @options /event_attr
+standard_options_req
 
 #* Get Event attributes
 #* @param event_id event id
