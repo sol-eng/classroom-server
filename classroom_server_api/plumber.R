@@ -32,7 +32,12 @@ cors <- function(res) {
   if (is.null(maybe_host) || maybe_host == "") {
     maybe_host <- "http://localhost:3001"
   }
-  res$setHeader("Access-Control-Allow-Origin", expected_host)
+  origin <- res$headers[["ORIGIN"]]
+  if (origin == "http://localhost:3001" || origin == "https://connect.posit.it") {
+    res$setHeader("Access-Control-Allow-Origin", origin)
+  } else {
+    res$setHeader("Access-Control-Allow-Origin", expected_host)
+  }
   res$setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PUT,POST,DELETE")
   res$setHeader("Access-Control-Allow-Headers", "Accept,Content-Type,Content-Length,Content-Profile,Accept-Encoding,X-CSRF-Token,Authorization,Prefer,X-Client-Info")
   res$setHeader("Access-Control-Allow-Credentials", "true")
