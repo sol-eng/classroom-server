@@ -28,12 +28,11 @@ expected_host <- "http://localhost:3001"
 
 #* @filter cors
 cors <- function(res) {
-  maybe_host <- res$headers[["HOST"]]
-  if (is.null(maybe_host) || maybe_host == "") {
-    maybe_host <- "http://localhost:3001"
-  }
+  hosts <- res$headers[["HOST"]]
+  host_list <- stringr::str_split(hosts, ",")
+  
   origin <- res$headers[["ORIGIN"]]
-  if (origin == "http://localhost:3001" || origin == "https://connect.posit.it") {
+  if (origin == "http://localhost:3001" || origin == "https://connect.posit.it" || any(host_list == origin)) {
     res$setHeader("Access-Control-Allow-Origin", origin)
   } else {
     res$setHeader("Access-Control-Allow-Origin", expected_host)
